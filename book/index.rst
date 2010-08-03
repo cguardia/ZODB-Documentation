@@ -8,6 +8,7 @@ Contents:
    :maxdepth: 3
 
    outline.rst
+   introduction.rst
 
 Indices and tables
 ==================
