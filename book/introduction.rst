@@ -230,10 +230,48 @@ well suited for ZODB use.
 Is the ZODB a NoSQL database?
 =============================
 
+In recent years, the term NoSQL has been consitently used to refer to a
+"new" breed of database systems which basically do not use the relational
+paradigm. Here is one semi-official definition of NoSQL:
+
+"Next Generation Databases mostly addressing some of the points: being non-
+elational, distributed, open-source and horizontal scalable. The original
+intention has been modern web-scale databases. The movement began early 2009
+and is growing rapidly. Often more characteristics apply as: schema-free,
+easy replication support, simple API, eventually consistent / BASE (not
+ACID), and more."
+
+Not a very formal definition, but you should get the idea. The ZODB has been
+around for more than a decade and thus clearly predates this concept (as do
+most of the NoSQL databases in existence), but in the general sense it can
+be classified as a NoSQL database, because it shares the main characteristic
+of being non-relational.
+
+The ZODB is also open source, horizontal scalable and schema-free, like many
+of its NoSQL counterparts. It is not distributed and does not offer easy
+replication, at least not for free.
+
 ZODB != Zope
 ============
 
-What can the ZODB do for me?
-============================
+Zope is a web application server written in Python that has also been around
+for more than 10 years. Unlike most web frameworks, Zope preferably uses an
+object database for persistence, rather than the usual relational database.
+The database used by Zope is of course the ZODB, which has been a vital part
+of it since its creation, but you had already guessed that by its name.
+
+In part for its strong association with Zope and probably also in part due
+to the low popularity of object databases in general, the ZODB is used very
+little outside of the Zope world. People just assume that you have to use
+one to get the other or are afraid that they would have to pull dozens of
+Zope dependencies if they chose to use the ZODB. Some might even believe
+that they have to write code in the 'Zope way' if they want to use it.
+
+Part of the motivation for writing this book is to clearly show the wider
+Python world that the ZODB is a totally independent Python package that can
+be a much better fit than relational databases for data persistence in many
+Python projects. The ZODB is sufficiently transaparent in use that you only
+need to follow a few very simple rules to get your application to store your
+objects. Everything else is just Python the way you always write it.
 
 
