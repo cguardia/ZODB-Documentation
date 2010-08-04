@@ -271,7 +271,7 @@ that they have to write code in the 'Zope way' if they want to use it.
 Part of the motivation for writing this book is to clearly show the wider
 Python world that the ZODB is a totally independent Python package that can
 be a much better fit than relational databases for data persistence in many
-Python projects. The ZODB is sufficiently transaparent in use that you only
+Python projects. The ZODB is sufficiently transparent in use that you only
 need to follow a few very simple rules to get your application to store your
 objects. Everything else is just Python the way you always write it.
 
