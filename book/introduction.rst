@@ -12,7 +12,7 @@ put, the ZODB allows you to persist your Python objects easily.
 Just as Python's dynamic nature allows developers to quickly get going with
 their applications and forget about the whole compile cycle, the ZODB lets
 them store their objects transparently and forget about the sometimes overly
-cumbersome mapping of objets to relational database tables. Instead of having
+cumbersome mapping of objects to relational database tables. Instead of having
 to worry about ways of disassembling complex objects to make them fit a
 relational model, or other kind of generic representation, programmers can
 store those objects in their native, assembled state.
