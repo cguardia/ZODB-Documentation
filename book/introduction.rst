@@ -248,8 +248,8 @@ most of the NoSQL databases in existence), but in the general sense it can
 be classified as a NoSQL database, because it shares the main characteristic
 of being non-relational.
 
-The ZODB is also open source, horizontal scalable and schema-free, like many
-of its NoSQL counterparts. It is not distributed and does not offer easy
+The ZODB is also open source, horizontally scalable and schema-free, like
+many of its NoSQL counterparts. It is not distributed and does not offer easy
 replication, at least not for free.
 
 ZODB != Zope
