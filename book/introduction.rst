@@ -232,7 +232,8 @@ Is the ZODB a NoSQL database?
 
 In recent years, the term NoSQL has been consitently used to refer to a
 "new" breed of database systems which basically do not use the relational
-paradigm. Here is one semi-official definition of NoSQL:
+paradigm. Here is one semi-official definition of NoSQL, taken from
+http://nosql-database.org/:
 
 "Next Generation Databases mostly addressing some of the points: being non-
 elational, distributed, open-source and horizontal scalable. The original
