@@ -283,4 +283,3 @@ projects. The ZODB is sufficiently transparent in use that you only need to
 follow a few very simple rules to get your application to store your objects.
 Everything else is "just Python".
 
-
