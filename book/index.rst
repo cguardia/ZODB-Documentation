@@ -7,8 +7,9 @@ Contents:
 .. toctree::
    :maxdepth: 3
 
-   outline.rst
    introduction.rst
+   installing.rst
+   working.rst
 
 Indices and tables
 ==================

@@ -51,6 +51,17 @@ class TimeTrax(cmd.Cmd, object):
     def postloop(self):
         print
 
+    def postcmd(self, stop, line):
+        if line=='EOF':
+            return self.do_EOF(self)
+        if not line.startswith('help'):
+            print
+
+    def precmd(self, line):
+        if not line.startswith('help'):
+            print
+        return line
+
     def emptyline(self):
         print
 
@@ -75,7 +86,7 @@ class TimeTrax(cmd.Cmd, object):
             self.dropProject(line)
             print "dropped project %s" % line
         else:
-            print "'%s' is not a recognized project"
+            print "%s is not a recognized project" % line
 
     def help_drop(self):
         print "drop project_name"

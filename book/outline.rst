@@ -24,6 +24,12 @@ Installation and running the first app. The objective of this chapter is to let
 the reader do something that works immediately. Just the basics to get an app
 running. Not a lot of details here.
 
+Working with the ZODB
+---------------------
+
+A bit more involved explanation of how the ZODB works and a more useful sample
+application. This chapter will cover usage of the ZODB in detail.
+
 Transactions
 ------------
 
@@ -32,12 +38,6 @@ very important to working effectively with it. This chapter introduces
 transactions, shows what happens when you commit or abort, describes what a
 conflict error is and explains why it's a good idea to avoid long running
 transactions.
-
-A more complex application
---------------------------
-
-A bit more involved explanation of how the ZODB works and a more useful sample
-application. This chapter will build on our understanding of transactions.
 
 Basic indexing and searching
 ----------------------------

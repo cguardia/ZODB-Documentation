@@ -16,8 +16,7 @@ class Project(persistent.Persistent):
     def addTask(self, name, description):
         task = Task(name, description)
         self.tasks[name] = task
-        self._p_changed = 1
-        transaction.commit()
+        self._p_changed = True
 
 class Task(persistent.Persistent):
     def __init__(self, name,  description):
@@ -28,8 +27,7 @@ class Task(persistent.Persistent):
     def bookTime(self, time, description=''):
         booking = Booking(time, description)
         self.bookings.append(booking)
-        self._p_changed = 1
-        transaction.commit()
+        self._p_changed = True
 
 class Booking(persistent.Persistent):
     def __init__(self, time, description):
@@ -56,12 +54,25 @@ class TimeTrax(cmd.Cmd, object):
 
     def addTask(self, project, name, description):
         self.projects[project].addTask(name, description)
+        transaction.commit()
 
     def bookTime(self, project, task, time, description):
         self.projects[project].tasks[task].bookTime(time, description)
+        transaction.commit()
 
     def postloop(self):
         print
+
+    def postcmd(self, stop, line):
+        if line=='EOF':
+            return self.do_EOF(self)
+        if not line.startswith('help'):
+            print
+            
+    def precmd(self, line):
+        if not line.startswith('help'):
+            print
+        return line
 
     def emptyline(self):
         print
@@ -87,7 +98,7 @@ class TimeTrax(cmd.Cmd, object):
             self.dropProject(line)
             print "dropped project %s" % line
         else:
-            print "'%s' is not a recognized project"
+            print "%s is not a recognized project" % line
 
     def help_drop(self):
         print "drop project_name"

@@ -67,7 +67,7 @@ require the python-tk package to be installed separately.
 
 Here's the code for our application:
 
-.. literalinclude:: ../code/chapter2/turtle_paint.py
+.. literalinclude:: ../code/installing/turtle_paint.py
     :linenos:
 
 The turtle module provides graphics commands to move a turtle around a Tk
@@ -233,7 +233,7 @@ saved drawing on the canvas. The redraw function takes advantage of some
 knowledge of the internal structure of the buffer to do this, but is otherwise
 straightforward. The final program with this function added looks like this:
 
-.. literalinclude:: ../code/chapter2/turtle_paint_zodb.py
+.. literalinclude:: ../code/installing/turtle_paint_zodb.py
     :linenos:
 
 That's it. Other than the transaction commit call, the code for storing the
@@ -323,5 +323,6 @@ Summary
 In this chapter we covered how to install the ZODB package and created a very
 simple drawing application which stores the drawings on the ZODB.  Of course,
 we have just scratched the surface of what the ZODB can do.  Hopefully, you see
-the potential by now. We'll now proceed to learn a bit about transactions in
-the next chapter.
+the potential by now. In the next chapter we'll create a more realistic
+application and explain in detail how to work with the ZODB.
+
