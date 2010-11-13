@@ -1,11 +1,10 @@
-ZODB Documentation
-==================
+ZODB 文書化
+==========
 
-The ZODB Documentation project is a community funded effort to create first
-rate documentation for the Zope Object Data Base.
+ZODB文書作成プロジェクトは、コミュニティが資金を提供してZopeオブジェクトデータベースについての第一級の文書を作る取り組みです。
 
-The documentation will consist on a book, articles and example code and is at
-the moment at the initial stages.
+この文書は、本、記事、サンプルコードを含み、今のところ作成過程の初期段階にあります。
 
-For more information, see http://zodbdocs.blogspot.com
+詳しくは、 http://zodbdocs.blogspot.com を見てください。
+
 

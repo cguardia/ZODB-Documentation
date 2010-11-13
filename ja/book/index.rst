@@ -1,8 +1,8 @@
-========================
-Welcome to the ZODB Book
-========================
+====================
+ZODBブックへようこそ
+====================
 
-This book is a work in progress. These documents discuss the objectives:
+この本は現在作成途中の作品です。この文書は次のような目的について議論します：
 
 .. toctree::
    :maxdepth: 1
@@ -10,11 +10,10 @@ This book is a work in progress. These documents discuss the objectives:
    outline.rst
    audience.rst
 
-This is an open license project. Anyone can download and use the source. Make a
-clone of the repository today, using our `Github repository
-<http://github.com/cguardia/ZODB-Documentation>`_.
+これは、オープンライセンスプロジェクトです。誰でもこのソースをダウンロードして使うことができます。`Github repository
+<http://github.com/cguardia/ZODB-Documentation>`_ を使って、さっそく今日にでもリポジトリのクローンを作りましょう。
 
-For more information, visit the `ZODB Documentation Blog <http://zodbdocs.blogspot.com/>`_.
+詳しくは、 `ZODB Documentation Blog <http://zodbdocs.blogspot.com/>`_ を訪ねてください。
 
 Contents:
 
@@ -25,8 +24,8 @@ Contents:
    installing.rst
    working.rst
 
-Indices and tables
-==================
+目次と一覧
+==========
 
 * :ref:`genindex`
 * :ref:`modindex`

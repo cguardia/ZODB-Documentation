@@ -1,103 +1,54 @@
-============
-Introduction
-============
+========
+はじめに
+========
 
-Imagine: you are writing a Python application of some kind. You have defined a
-number of complex objects, each with properties of various types.  Some of
-these properties are other objects that are also defined within part of your
-code. You now need to persist the state of these objects, so that this state
-can be retrieved in future runs of your program. The Zope Object Database
-("ZODB") can help.  The ZODB allows you to persist your Python objects easily.
+あなたがPythonのアプリケーションを何かしら書いているところを想像してみてください。いくつもの複雑なオブジェクトを定義して、それぞれのオブジェクトにはに種々のプロパティがあります。これらプロパティのいくつかは他のオブジェクトであり、あなたのコードの一部分で定義されています。これらのオブジェクトのステート（様態）を必要があります。後でプログラムを走らせた時に以前のステートを取ってくることができるようにするためです。Zopeオブジェクトデータベース("ZODB")が役に立ちます。ZODBはあなたのPythonオブジェクトを簡単に永続化できるようにしてくれます。
 
-Python's dynamic nature allows developers to quickly develop applications,
-avoiding the compile cycle and static typing declarations required by other
-languages. The ZODB offers a similar benefit: developers who use the ZODB can
-store their objects transparently without any cumbersome mapping of objets to
-relational database tables. They no longer need to worry about ways of
-decomposing complex objects in order to fit a relational or filesystem model:
-using ZODB, programmers can store Python objects in their native, assembled
-state.
+Pythonの動的な資質によって、開発者は迅速にアプリケーションを開発することができます。他の言語で必要とされるコンパイル処理や静的型宣言をせずにすむからです。ZODBは似たような利便性を提供します：ZODBを使う開発者は、リレーショナルデータベーステーブルへのオブジェクトのマッピングといった面倒なことをせずに、オブジェクトを透過的に格納することができます。
+リレーショナルモデルやファイルシステムモデルに合わせるために、複雑なオブジェクトを分解する方法を心配する必要は、もはやありません。ZODBを使えば、プログラマはPythonオブジェクトをその生まれつきのまま、集合体の様態で格納することができます。
 
-This book will introduce the ZODB in detail and will cover its features
-step-by-step, using a hands-on approach with many code examples and practical
-tips.
+この本は、多くのコード例と実用的な秘訣を使った現場主義的な形で、次のような特徴について順を追って詳細にZODBを紹介していきます。
 
-Looking at the ZODB from 10,000 feet
-====================================
+ZODBを10,000フィート上空から見る
+================================
 
-ZODB takes a minimalist approach, compared to other systems which call
-themselves "databases". ZODB provides persistence and transaction support, but
-provides no security, indexing or search facilities. There are third party
-packages which provide these (and additional) services for the ZODB, but for
-now let's take a look at its core features.
+ZODBはミニマリストアプローチを採用しています。自分自身を「データベース」と呼ぶ他のシステムに比べれば、ZODBは必要最低限の機能だけしか持っていません。ZODBは永続性とトランザクションをサポートしますが、セキュリティや、インデクシング、検索機能は提供しません。これらの機能やさらに追加的なサービスをZODB用に提供するサードパーティパッケージがありますが、ここではそれらに言及せずに、ZODBの中核となる機能を見てみましょう。
 
-Familiarity
------------
+親密性
+------
 
-For a Python developer, the ZODB offers a very familiar environment.  Not only
-does it store native Python objects, but even its internal serialization
-mechanism is well known to Python programmers: it uses the *pickle* module
-included in the Python Standard Library. ZODB is written in Python itself, so
-in extreme cases developers can look under the hood without needing other tools
-than the ones they use regularly.
+Python開発者にとっては、ZODBはとても親しみやすい環境を提供します。ZODBはネイティブのPythonオブジェクトを格納するだけでなく、ZODB内部の直列化機構にはPythonプログラマによく知られたものが使われています。ZODBはPython標準ライブラリに含まれている *pickle* モジュールを使います。ZODBはPythonそのもので書かれていますから、極端な場合は開発者はいつも使うツール以外の他のツールを必要とせずにZODBの内部を見ることができます。
 
-Simplicity
-----------
+単純性
+------
 
-The ZODB is a hierarchical database. There is a root object, initialized when a
-database is created. The root object is used like a Python dictionary and it
-can contain other objects (which can be dictionary-like themselves). To store
-an object in the database, it's enough to assign it to a new key inside its
-container.
+ZODBは階層型データベースです。ルートオブジェクトがあり、それはデータベースが作られるときに初期化されます。ルートオブジェクトはPython辞書のように使われ、（それ自身が辞書風であり得る）他のオブジェクトを含むことができます。データベース内にオブジェクトを格納するためには、それをそのコンテナ内部で新しいキーに割り当てるだけでこと足ります。
 
-Production-readiness
+プロダクション適性
 ---------------------
 
-The ZODB has been around for over ten years and has been put into many
-production environments.
+ZODBは10年以上にわたり現役であり、多くのプロダクション環境で使用されてきました。
 
-Transparency
-------------
+透過性
+------
 
-To make an instance of a class automatically persistent, it's enough for its
-class to inherit from a base "Persistent" class. The ZODB will then take care
-of saving objects which inherit from this class whenever they are changed.
-Non-persistent objects can also be saved easily to ZODB, but in some cases it
-becomes necessary to alert the ZODB when they change.
+クラスのインスタンスを自動的に永続性を持たせるには、そのクラスに、ベースとなる"Persistent"クラスを継承させるだけでこと足ります。そうすると、このクラスを継承したオブジェクトは、そのオブジェクトが変化するたびにZODBがそのオブジェクトを保存する面倒を見るようになります。非永続性オブジェクトもZODBに簡単に保存することができますが、場合によっては、オブジェクトが変化した時にそれをZODBに警告する必要が出てきます。
 
-Transaction support
--------------------
+トランザクションサポート
+------------------------
 
-Transactions are a series of changes to the database that need to be carried
-out as a unit. That is, either all of the changes in a transaction take place,
-or none do. Generally, when you are through with a series of changes the
-transaction is *committed* and if anything goes wrong it is *aborted*.
+トランザクションはデータベースへの変更が一連となったものであり、ひとつの単位として実施されなければなりません。つまり、ひとつのトランザクションに含まれる変更がすべて為されるか、あるいはひとつも為されないかのどちらかです。一般的に、一連の変更を一気に貫いて為すと、トランザクションはコミットされた *committed* ことになり、もし何かがうまくいかなければ、アボートされた *aborted* されたことになります。
 
-If you have worked with relational databases, transactions should be familiar.
-Transactional systems need to make sure that the database never gets into an
-inconsistent state, which they do by supporting four properties, known by the
-acronym ACID:
+もしリレーショナルデータベースを扱ったことがあるなら、トランザクションをよく知っているはずです。トランザクション処理システムは、データベースがけっして矛盾した様態に陥らないようにする必要があります。そのためには、略してACIDとして知られる４つの特性を持つ必要があります。:
 
- - Atomicity.
-   Either all the modifications grouped in a transaction will be written to
-   the database or, if something makes this impossible, the whole
-   transaction will be aborted. This insures that in the event of a write
-   error or a hardware glitch the database will remain in the previous state
-   and avoid inconsistencies.
- - Consistency.
-   For writing transactions, these means that no transaction will be allowed
-   if it would leave the database in an inconsistent state. For reading
-   transactions it means that a read operation will see the database in the
-   consistent state it was at the beginning of the transaction, regardless
-   of other transactions taking place at the time.
- - Isolation.
-   When changes are made to the database by two different programs, they
-   will not be able to see each other's transactions until they commit their
-   own.
- - Durability.
-   This simply means that the data will be safely stored once the
-   transaction is committed. A software or hardware crash will not cause any
-   information to be lost after that.
+ - 原子性
+   ひとつのトランザクションとしてグループ化されているすべての変更がデータベースに書き込まれるか、あるいはもし何かがそれを不可能にしたならば、そのトランザクション全体がアボートされることになります。このことにより、書き込みエラーやハードウェアの誤動作が起きたとしても、矛盾した状態にならないことを保証します。
+ - 一貫性
+   トランザクションを書き込む際に、一貫性というのはデータベースを矛盾した状態のままにするようなトランザクションは許されないということを意味します。トランザクションを読み出す際には、一貫性というのは同時に他のトランザクションが起きようと起きまいと関係なく、読み出し操作はトランザクションの始まり時点での一貫した状態にあるデータベースを見ることになるということです。置くようなついて
+ - 独立性
+   異なる二つのプログラムによってデータベースに変更が為されるときに、それらは互いに他のトランザクションを、それぞれが自分のコミットをするまでは見ることができないということです。
+ - 永続性
+   これは単純に、トランザクションが一度コミットされれば、データが安全に格納されることを意味します。その後は、ソフトウェアやハードウェアのクラッシュが情報を失なわせるようになることはありません。
 
 Save points
 -----------
