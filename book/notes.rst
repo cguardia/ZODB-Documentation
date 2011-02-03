@@ -13,3 +13,9 @@ book, including links to articles or packages that can be helpful.
  - Nice script by mcdonc to find FileStorage transactions later than some date:
    http://bfg.repoze.org/tutorialbin/17/
  - Maybe create a section of good practices somewhere.
+ - Chris Rossi commented on IRC that to get an object from the ZODB without
+   traversing the hierarchy, we can use its oid: o._p_jar[oid].
+ - This code from Malthe can be used to migrate broken objects from a ZODB:
+   https://gist.github.com/704910
+ - The zodbbrowser package might be useful: http://pypi.python.org/pypi/zodbbrowser
+
