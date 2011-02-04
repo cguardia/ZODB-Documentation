@@ -1,0 +1,7 @@
+@import url('default.css');
+
+/* fix google chrome <pre> tag renderings */
+
+pre {
+   line-height: normal !important;
+}
