@@ -1,0 +1,33 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" xmlns:tal="http://xml.zope.org/namespaces/tal">
+<head>
+  <title>Todo list demo for repoze.tm2</title>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/>
+  <meta name="keywords" content="python web application" />
+  <meta name="description" content="pyramid web application" />
+</head>
+<body>
+  <h1>Todo List</h1>
+  <p tal:condition="status"><b>$status</b></p>
+  <form>
+    <table tal:condition="tasks">
+      <tr tal:repeat="task tasks">
+        <td>
+          <input type="checkbox" name="tasks"
+            tal:attributes="value task[0]" />
+        </td>       
+        <td tal:condition="not task[2]" tal:content="task[1]"></td>
+        <td tal:condition="task[2]"><s tal:content="task[1]"></s></td>
+      </tr>
+    </table>
+    <p>
+      <input type="submit" name="submit" value="done" />
+      <input type="submit" name="submit" value="not done" />
+      <input type="submit" name="submit" value="delete" />
+    </p>
+    <h3>New task</h3>
+    <textarea name="text" rows="5" cols="80"></textarea><br/>
+    <input type="submit" name="submit" value="add" />
+  </form>
+</body>
+</html>
