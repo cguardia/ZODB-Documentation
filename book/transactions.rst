@@ -32,15 +32,77 @@ few things that we need to explain before doing that.
 Transactions
 ============
 
+A transaction consists of one or more operations that we want to perform as a
+single action. It's an all or nothing proposition: either all the operations
+that are part of the transaction are completed successfully or none of them
+have any effect.
 
+In the transaction package, a transaction object represents a running
+transaction that can be committed or aborted in the end.
 
 Transaction managers
 ====================
 
+Applications interact with a transaction using a transaction manager, which is
+responsible for establishing the transaction boundaries. Basically this means
+that it creates the transactions and keeps track of the current one. Whenever
+an application wants to use the transaction machinery, it gets the current
+transaction from the transaction manager before starting any operations
 
+The default transaction manage for the transaction package is thread aware.
+Each thread is associated with a unique transaction.
+
+Application developers will mosty likely never need to create their own
+transaction managers.
 
 Data Managers
 =============
 
+A data manager handles the interaction between the transaction manager and the
+data storage mechanism used by the application, which can be an object storage
+like the ZODB, a relational database, a file or any other storage mechanism
+that the application needs to control.
 
+The data manager provides a common interface for the transaction manger to use
+while a transaction is running. To be part of a specific transaction, a data
+manager has to 'join' it. Any number of data managers can join a transaction,
+which means that you could for example perform writing operations on a ZODB
+storage and a relational database as part of the same transaction. The
+transaction manager will make sure that both data managers can commit the
+transaction or none of them does.
+
+An application developer will need to write a data manager for each different
+type of storage that the application uses. There are also third party data
+managers that can be used instead.
+
+The two phase commit protocol
+=============================
+
+The transaction machinery uses a two phase commit protocol for coordinating all
+paticipating data managers in a transaction. The two phases work like follows:
+
+ 1. The commit process is started.
+ 2. Each associated data manager prepares the changes to be persistent.
+ 3. Each data manager verifies that no errors or other exceptional conditions
+    occurred during the attempt to persist the changes. If that happens, an
+    exception should be raised. This is called 'voting'. A data manager votes
+    'no' by raising an exception if something goes wrong; otherwise, its vote
+    is counted as a 'yes'.
+ 4. If any of the associated data managers votes 'no', the transaction is
+    aborted; otherwise, the changes are made permanent.
+
+The two phase commit sequence requires that all the storages being used are
+capable of rolling back or aborting changes.
+
+Savepoints
+==========
+
+A savepoint allows a data manager to save work to its storage without
+committing the full transaction. In other words, the transaction will go on,
+but if a rollback is needed we can get back to this point instead of starting
+all over.
+
+Savepoints are also useful to free memory that would otherwise be used to keep
+the whole state of the transaction. This can be very important when a
+transaction attempts a large number of changes.
 
