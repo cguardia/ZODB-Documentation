@@ -29,8 +29,11 @@ To install the transaction package you can use easy_install::
 After this, the package can be imported in your Python code, but there are a
 few things that we need to explain before doing that.
 
+Things you need to know about the transaction machinery
+=======================================================
+
 Transactions
-============
+------------
 
 A transaction consists of one or more operations that we want to perform as a
 single action. It's an all or nothing proposition: either all the operations
@@ -41,7 +44,7 @@ In the transaction package, a transaction object represents a running
 transaction that can be committed or aborted in the end.
 
 Transaction managers
-====================
+--------------------
 
 Applications interact with a transaction using a transaction manager, which is
 responsible for establishing the transaction boundaries. Basically this means
@@ -56,7 +59,7 @@ Application developers will mosty likely never need to create their own
 transaction managers.
 
 Data Managers
-=============
+-------------
 
 A data manager handles the interaction between the transaction manager and the
 data storage mechanism used by the application, which can be an object storage
@@ -76,7 +79,7 @@ type of storage that the application uses. There are also third party data
 managers that can be used instead.
 
 The two phase commit protocol
-=============================
+-----------------------------
 
 The transaction machinery uses a two phase commit protocol for coordinating all
 paticipating data managers in a transaction. The two phases work like follows:
@@ -95,7 +98,7 @@ The two phase commit sequence requires that all the storages being used are
 capable of rolling back or aborting changes.
 
 Savepoints
-==========
+----------
 
 A savepoint allows a data manager to save work to its storage without
 committing the full transaction. In other words, the transaction will go on,
@@ -105,4 +108,69 @@ all over.
 Savepoints are also useful to free memory that would otherwise be used to keep
 the whole state of the transaction. This can be very important when a
 transaction attempts a large number of changes.
+
+Using transactions
+==================
+
+Now that we got the terminology out of the way, let's show how to use this
+package in a Python application. One of the most popular ways of using the
+transaction package is to combine transactions from the ZODB with a relational
+database backend. Likewise, one of the most popular ways of communicating with
+a relational database in Python is to use the SQLAlchemy Object-Relational
+Mapper. Let's forget about the ZODB for the moment and show how one could use
+the transaction module in a Python application that needs to talk to a
+relational database.
+
+Installing SQLAlchemy
+---------------------
+
+
+
+Choosing a data manager
+-----------------------
+
+
+
+A simple demonstration
+----------------------
+
+
+
+The two-phase commit protocol in practice
+=========================================
+
+
+
+Things to keep in mind about transactions
+=========================================
+
+Avoid long running transactions
+-------------------------------
+
+
+
+handling conflict errors
+------------------------
+
+
+
+Writing our own data manager
+============================
+
+
+
+Using transactions in web applications
+======================================
+
+
+
+Repoze.tm2: transaction aware middleware for WSGI applications
+--------------------------------------------------------------
+
+
+
+A to-do application using repoze.tm2
+------------------------------------
+
+
 

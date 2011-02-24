@@ -39,11 +39,24 @@ transactions, shows what happens when you commit or abort, describes what a
 conflict error is and explains why it's a good idea to avoid long running
 transactions.
 
+Persistence
+-----------
+
+Another dependency of the ZODB is the persistent module. This chapter
+introduces the package and shows how to make persistent objects that can
+be associated with a data manager and notify it when they change.
+
 Basic indexing and searching
 ----------------------------
 
 The Catalog and indexes. I propose to use repoze.catalog here, which uses
 zope.index.
+
+ZODB patterns
+-------------
+
+This chapter shows some common patterns for working with specific situations
+that come up when using the ZODB.
 
 Maintenance
 -----------
