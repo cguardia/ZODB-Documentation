@@ -16,8 +16,11 @@
           <input type="checkbox" name="tasks"
             tal:attributes="value task[0]" />
         </td>       
-        <td tal:condition="not task[2]" tal:content="task[1]"></td>
-        <td tal:condition="task[2]"><s tal:content="task[1]"></s></td>
+        <td tal:condition="not task[1]['task_completed']"
+            tal:content="task[1]['task_description']"></td>
+        <td tal:condition="task[1]['task_completed']">
+          <s tal:content="task[1]['task_description']"></s>
+        </td>
       </tr>
     </table>
     <p>
