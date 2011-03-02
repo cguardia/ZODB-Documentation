@@ -66,7 +66,7 @@ data storage mechanism used by the application, which can be an object storage
 like the ZODB, a relational database, a file or any other storage mechanism
 that the application needs to control.
 
-The data manager provides a common interface for the transaction manger to use
+The data manager provides a common interface for the transaction manager to use
 while a transaction is running. To be part of a specific transaction, a data
 manager has to 'join' it. Any number of data managers can join a transaction,
 which means that you could for example perform writing operations on a ZODB
@@ -124,17 +124,124 @@ relational database.
 Installing SQLAlchemy
 ---------------------
 
+Installing SQLAlchemy is as easy as installing any Python package available on
+PyPi::
 
+    $ easy_install sqlalchemy
+
+This will install the package in your Python environment. You'll need to set up
+a relational database that you can use to work out the examples in the 
+following sections. SQLAlchemy supports most relational backends that you may
+have heard of, but the simplest thing to do is to use SQLite, since it doesn't
+require a separate Python driver. You'll have to make sure that the operating
+system packages required for using SQLite are present, though.
+
+If you want to use another database, make sure you install the required
+system packages and drivers in addition to the database. For information about
+which databases are supported and where you can find the drivers, consult
+http://www.sqlalchemy.org/docs/core/engines.html#supported-dbapis.
 
 Choosing a data manager
 -----------------------
 
+Hopefully, at this point SQLAlchemy and SQLite (or other database if you are
+feeling adventurous) are installed. To use this combination with the transaction
+package, we need a data manager that knows how to talk to SQLAlchemy so that the
+appropriate SQL commands are sent to SQLite whenever an event in the transaction
+lifecycle occurs.
 
+Fortunately for us, there is already a package that does this on PyPI, so it's
+just a matter of installing it on our system. The package is called
+zope.sqlalchemy, but despite its name it doesn't depend on any zope packages
+other than zope.interface. By now you already know how to install it::
+
+    $ easy_install zope.sqlalchemy
+
+You can now create Python applications that use the transaction module to
+control any SQLAlchemy-supported relational backend.
 
 A simple demonstration
 ----------------------
 
+It's time to show how to use SQLAlchemy together with the transaction package.
+To avoid lengthy digressions, knowledge of how SQLAlchemy works is assumed. If
+you are not familiar with that, reading the tutorial at 
+http://www.sqlalchemy.org/docs/orm/tutorial.html will give you a good
+enough background to understand what follows. 
 
+The first step is to create an engine:
+
+..code-block:: python
+    :linenos:
+
+     from sqlalchemy import create_engine
+     engine = create_engine('sqlite:///:memory:')
+
+This will connect us to the database. The connection string shown here is for
+SQLite, if you set up a different database you will need to look up the correct
+connection string syntax for it.
+
+The next step is to define a class that will be mapped to a table in the
+relational database. SQLAlchemy's declarative syntax allows us to do that
+easily:
+
+..code-block:: python
+    :linenos:
+
+     from sqlalchemy import Column, Integer, String
+     from sqlalchemy.ext.declarative import declarative_base
+
+     Base = declarative_base()
+     class User(Base):
+         __tablename__ = 'users'
+     
+         id = Column(Integer, primary_key=True)
+         name = Column(String)
+         fullname = Column(String)
+         password = Column(String)
+
+     base.metadata.create_all(engine)
+
+The User class is now mapped to the table named 'users'. The create_all method
+in line 13 creates the table in case it doesn't exist already.
+
+We can now create a session and integrate the zope.sqlalchemy data manager with
+it so that we can use the transaction machinery. This is done by passing a
+Session Extension when creating the SQLAlchemy session:
+
+..code-block:: python
+    :linenos:
+
+     from sqlalchemy.orm import sessionmaker
+     from zope.sqlalchemy import ZopeTransactionExtension
+
+     Session = sessionmaker(bind=engine, extension=ZopeTransactionExtension())
+     session = Session()
+
+In line 5, we create a session class that is bound to the engine that we set up
+earlier. Notice how we pass the ZopeTransactionExtension using the extension
+parameter. This extension connects the SQLAlchemy session with the data manager
+provided by zope.sqlalchemy.
+
+In line 6 we create a session. Under the hood, the ZopeTransactionExtension
+makes sure that the current transaction is joined by the zope.sqlalchemy data
+manager, so it's not necessary to explicitly join the transaction in our code.
+
+Finally, we are able to put some data inside our new table and commit the
+transaction:
+
+..code-block:: python
+    :linenos:
+
+    import transaction
+
+    session.add(User(id=1, name='John', fullname="John Smith", password="123"))
+    transaction.commit()
+
+Since the transaction was already joined by the zope.sqlalchemy data manager,
+we can just call commit and the transaction is correctly committed. As you can
+see, the integration between SQLAlchemy and the transaction machinery is pretty
+transaparent.
 
 The two-phase commit protocol in practice
 =========================================

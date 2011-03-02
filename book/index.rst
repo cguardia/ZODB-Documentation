@@ -24,6 +24,7 @@ Contents:
    introduction.rst
    installing.rst
    working.rst
+   transactions.rst
 
 Indices and tables
 ==================
