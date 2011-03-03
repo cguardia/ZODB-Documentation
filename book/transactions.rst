@@ -169,13 +169,15 @@ you are not familiar with that, reading the tutorial at
 http://www.sqlalchemy.org/docs/orm/tutorial.html will give you a good
 enough background to understand what follows. 
 
-The first step is to create an engine:
+After installing the required packages, you may wish to follow along the
+examples using the Python interpreter where you installed them. The first step
+is to create an engine:
 
 ..code-block:: python
     :linenos:
 
-     from sqlalchemy import create_engine
-     engine = create_engine('sqlite:///:memory:')
+     >>> from sqlalchemy import create_engine
+     >>> engine = create_engine('sqlite:///:memory:')
 
 This will connect us to the database. The connection string shown here is for
 SQLite, if you set up a different database you will need to look up the correct
@@ -188,19 +190,19 @@ easily:
 ..code-block:: python
     :linenos:
 
-     from sqlalchemy import Column, Integer, String
-     from sqlalchemy.ext.declarative import declarative_base
+     >>> from sqlalchemy import Column, Integer, String
+     >>> from sqlalchemy.ext.declarative import declarative_base
 
-     Base = declarative_base()
-     class User(Base):
-         __tablename__ = 'users'
-     
-         id = Column(Integer, primary_key=True)
-         name = Column(String)
-         fullname = Column(String)
-         password = Column(String)
+     >>> Base = declarative_base()
+     >>> class User(Base):
+     >>>     __tablename__ = 'users'
+     ...
+     ...    id = Column(Integer, primary_key=True)
+     ...    name = Column(String)
+     ...    fullname = Column(String)
+     ...    password = Column(String)
 
-     base.metadata.create_all(engine)
+     >>> Base.metadata.create_all(engine)
 
 The User class is now mapped to the table named 'users'. The create_all method
 in line 13 creates the table in case it doesn't exist already.
@@ -212,11 +214,11 @@ Session Extension when creating the SQLAlchemy session:
 ..code-block:: python
     :linenos:
 
-     from sqlalchemy.orm import sessionmaker
-     from zope.sqlalchemy import ZopeTransactionExtension
+     >>> from sqlalchemy.orm import sessionmaker
+     >>> from zope.sqlalchemy import ZopeTransactionExtension
 
-     Session = sessionmaker(bind=engine, extension=ZopeTransactionExtension())
-     session = Session()
+     >>> Session = sessionmaker(bind=engine, extension=ZopeTransactionExtension())
+     >>> session = Session()
 
 In line 5, we create a session class that is bound to the engine that we set up
 earlier. Notice how we pass the ZopeTransactionExtension using the extension
@@ -233,15 +235,152 @@ transaction:
 ..code-block:: python
     :linenos:
 
-    import transaction
+    >>> import transaction
 
-    session.add(User(id=1, name='John', fullname="John Smith", password="123"))
-    transaction.commit()
+    >>> session.add(User(id=1, name='John', fullname='John Smith', password='123'))
+    >>> transaction.commit()
 
 Since the transaction was already joined by the zope.sqlalchemy data manager,
 we can just call commit and the transaction is correctly committed. As you can
 see, the integration between SQLAlchemy and the transaction machinery is pretty
 transaparent.
+
+Aborting transactions
+---------------------
+
+Of course, when using the transaction machinery you can also abort or rollback
+a transaction. An example follows:
+
+..code-block:: python
+    :linenos:
+
+    >>> session = Session()
+    >>> john = session.query(User).all()[0]
+    >>> john.fullname
+    u'John Smith'
+    >>> john.fullname = 'John Q. Public'
+    >>> john.fullname
+    u'John Q. Public'
+    >>> transaction.abort()
+
+We need a new transaction for this example, so a new session is created. Since
+the old transaction had ended with the commit, creating a new session joins it
+to the current transaction, which will be a new one as well.
+
+We make a query just to show that our user's fullname is 'John Smith', then we
+change that to 'John Q. Public'. When the transaction is aborted in line 7,
+the name is reverted to the old value.
+
+If we create a new session and query the table for our old friend John, we'll
+see that the old value was indeed preserved because of the abort:
+
+..code-block:: python
+    :linenos:
+
+    >>> session = Session()
+    >>> john = session.query(User).all()[0]
+    >>> john.fullname
+    u'John Smith'
+
+Savepoints
+----------
+
+A nice feature offered by many transactional backends is the existence of
+savepoints. These allow in effect to save the changes that we have made at the
+current point in a transaction, but without committing the transaction. If
+eventually we need to rollback a future operation, we can use the savepoint to
+return to the "safe" state that we had saved.
+
+Unfortunately not every database supports savepoints and SQLite is precisely
+one of those that doesn't, which means that in order to be able to test this
+functionality you will have to install another database, like PostgreSQL. Of
+course, you can also just take our word that it really works, so suit yourself.
+
+Let's see how a savepoint would work using PostgreSQL. First we'll import
+everything and setup the same table we used in our SQLite examples:
+
+..code-block:: python
+    :linenos:
+
+    >>> from sqlalchemy import create_engine
+    >>> engine = create_engine('postgresql://postgres@127.0.0.1:5432')
+    >>> from sqlalchemy import Column, Integer, String
+    >>> from sqlalchemy.ext.declarative import declarative_base
+    >>> Base = declarative_base()
+    >>> Base.metadata.create_all(engine)
+    >>> class User(Base):
+    ...     __tablename__ = 'users'
+    ...     id = Column(Integer, primary_key=True)
+    ...     name = Column(String)
+    ...     fullname = Column(String)
+    ...     password = Column(String)
+    ... 
+    >>> Base.metadata.create_all(engine)
+    >>> from sqlalchemy.orm import sessionmaker
+    >>> from zope.sqlalchemy import ZopeTransactionExtension
+    >>> Session = sessionmaker(bind=engine, extension=ZopeTransactionExtension())
+
+ We are now ready to create and use a savepoint:
+
+..code-block:: python
+    :linenos:
+
+    >>> import transaction
+    >>> session = Session()
+    >>> session.add(User(id=1, name='John', fullname='John Smith', password='123'))
+    >>> sp = transaction.savepoint()
+
+Everything should look familiar until line 4, where we create a savepoint and
+assign it to the sp variable. If we never need to rollback, this will not be
+used, but if course we have to hold on to it in case we do.
+
+Now, we'll add a second user:
+
+..code-block:: python
+    :linenos:
+
+    >>> session.add(User(id=2, name='John', fullname='John Watson', password='123'))
+    >>> [o.fullname for o in session.query(User).all()]
+    [u'John Smith', u'John Watson']
+
+The new user has been added. We have not committed or aborted yet, but suppose
+we encounter an error condition that requires us to get rid of the new user,
+but not the one we added first. This is where the savepoint comes handy:
+
+..code-block:: python
+    :linenos:
+
+    >>> sp.rollback()
+    >>> [o.fullname for o in session.query(User).all()]
+    [u'John Smith']
+    >>> transaction.commit()
+
+As you can see, we just call the rollback method and we are back to where we
+wanted. The transaction can then be committed and the data that we decided to
+keep will be saved.
+
+Managing more than one backend
+==============================
+
+Going through the previous section's examples, experienced users of any
+powerful enough relational backend might have been thinking, "wait, my database
+already can do that by itself. I can always commit or rollback when I want to,
+so what's the advantage of using this machinery?"
+
+The answer is that if you are using a single backend and it already supports
+savepoints, you really don't need a transaction manager. The transaction
+machinery can still be useful with a single backend if it doesn't support
+transactions. A data manager can be written to add this support. There are
+existent packages that do this for files stored in a file system or for email
+sending, just to name a few examples.
+
+However, the real power of the transaction manager is the ability to combine
+two or more of these data managers in a single transaction. Say you need to
+capture data from a form into a relational database and send email only on
+transaction commit, that's a good use case for the transaction package.
+
+We will illustrate this by showing an example of managing both a SQLite and a
+ZODB transactions.
 
 The two-phase commit protocol in practice
 =========================================
