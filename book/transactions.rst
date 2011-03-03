@@ -173,11 +173,11 @@ After installing the required packages, you may wish to follow along the
 examples using the Python interpreter where you installed them. The first step
 is to create an engine:
 
-..code-block:: python
+.. code-block:: python
     :linenos:
 
-     >>> from sqlalchemy import create_engine
-     >>> engine = create_engine('sqlite:///:memory:')
+    >>> from sqlalchemy import create_engine
+    >>> engine = create_engine('sqlite:///:memory:')
 
 This will connect us to the database. The connection string shown here is for
 SQLite, if you set up a different database you will need to look up the correct
@@ -187,22 +187,21 @@ The next step is to define a class that will be mapped to a table in the
 relational database. SQLAlchemy's declarative syntax allows us to do that
 easily:
 
-..code-block:: python
+.. code-block:: python
     :linenos:
 
-     >>> from sqlalchemy import Column, Integer, String
-     >>> from sqlalchemy.ext.declarative import declarative_base
-
-     >>> Base = declarative_base()
-     >>> class User(Base):
-     >>>     __tablename__ = 'users'
-     ...
-     ...    id = Column(Integer, primary_key=True)
-     ...    name = Column(String)
-     ...    fullname = Column(String)
-     ...    password = Column(String)
-
-     >>> Base.metadata.create_all(engine)
+    >>> from sqlalchemy import Column, Integer, String
+    >>> from sqlalchemy.ext.declarative import declarative_base
+    >>> Base = declarative_base()
+    >>> class User(Base):
+    >>>     __tablename__ = 'users'
+    ...
+    ...    id = Column(Integer, primary_key=True)
+    ...    name = Column(String)
+    ...    fullname = Column(String)
+    ...    password = Column(String)
+    ...
+    >>> Base.metadata.create_all(engine)
 
 The User class is now mapped to the table named 'users'. The create_all method
 in line 13 creates the table in case it doesn't exist already.
@@ -211,14 +210,13 @@ We can now create a session and integrate the zope.sqlalchemy data manager with
 it so that we can use the transaction machinery. This is done by passing a
 Session Extension when creating the SQLAlchemy session:
 
-..code-block:: python
+.. code-block:: python
     :linenos:
 
-     >>> from sqlalchemy.orm import sessionmaker
-     >>> from zope.sqlalchemy import ZopeTransactionExtension
-
-     >>> Session = sessionmaker(bind=engine, extension=ZopeTransactionExtension())
-     >>> session = Session()
+    >>> from sqlalchemy.orm import sessionmaker
+    >>> from zope.sqlalchemy import ZopeTransactionExtension
+    >>> Session = sessionmaker(bind=engine, extension=ZopeTransactionExtension())
+    >>> session = Session()
 
 In line 5, we create a session class that is bound to the engine that we set up
 earlier. Notice how we pass the ZopeTransactionExtension using the extension
@@ -232,11 +230,10 @@ manager, so it's not necessary to explicitly join the transaction in our code.
 Finally, we are able to put some data inside our new table and commit the
 transaction:
 
-..code-block:: python
+.. code-block:: python
     :linenos:
 
     >>> import transaction
-
     >>> session.add(User(id=1, name='John', fullname='John Smith', password='123'))
     >>> transaction.commit()
 
@@ -251,7 +248,7 @@ Aborting transactions
 Of course, when using the transaction machinery you can also abort or rollback
 a transaction. An example follows:
 
-..code-block:: python
+.. code-block:: python
     :linenos:
 
     >>> session = Session()
@@ -274,7 +271,7 @@ the name is reverted to the old value.
 If we create a new session and query the table for our old friend John, we'll
 see that the old value was indeed preserved because of the abort:
 
-..code-block:: python
+.. code-block:: python
     :linenos:
 
     >>> session = Session()
@@ -299,7 +296,7 @@ course, you can also just take our word that it really works, so suit yourself.
 Let's see how a savepoint would work using PostgreSQL. First we'll import
 everything and setup the same table we used in our SQLite examples:
 
-..code-block:: python
+.. code-block:: python
     :linenos:
 
     >>> from sqlalchemy import create_engine
@@ -320,9 +317,9 @@ everything and setup the same table we used in our SQLite examples:
     >>> from zope.sqlalchemy import ZopeTransactionExtension
     >>> Session = sessionmaker(bind=engine, extension=ZopeTransactionExtension())
 
- We are now ready to create and use a savepoint:
+We are now ready to create and use a savepoint:
 
-..code-block:: python
+.. code-block:: python
     :linenos:
 
     >>> import transaction
@@ -336,7 +333,7 @@ used, but if course we have to hold on to it in case we do.
 
 Now, we'll add a second user:
 
-..code-block:: python
+.. code-block:: python
     :linenos:
 
     >>> session.add(User(id=2, name='John', fullname='John Watson', password='123'))
@@ -347,7 +344,7 @@ The new user has been added. We have not committed or aborted yet, but suppose
 we encounter an error condition that requires us to get rid of the new user,
 but not the one we added first. This is where the savepoint comes handy:
 
-..code-block:: python
+.. code-block:: python
     :linenos:
 
     >>> sp.rollback()
