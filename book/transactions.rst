@@ -227,6 +227,10 @@ In line 6 we create a session. Under the hood, the ZopeTransactionExtension
 makes sure that the current transaction is joined by the zope.sqlalchemy data
 manager, so it's not necessary to explicitly join the transaction in our code.
 
+Note that even though the word zope is part of its name, there is nothing Zope
+specific about the ZopeTransactionExtension, nor does it require installation
+of any zope packages.
+
 Finally, we are able to put some data inside our new table and commit the
 transaction:
 
@@ -376,24 +380,475 @@ two or more of these data managers in a single transaction. Say you need to
 capture data from a form into a relational database and send email only on
 transaction commit, that's a good use case for the transaction package.
 
-We will illustrate this by showing an example of managing both a SQLite and a
-ZODB transactions.
+We will illustrate this by showing an example of coordinating transactions to
+a relational database and a ZODB client.
+
+The first thing to do is set up the relational database, using the code that
+we've seen before:
+
+.. code-block:: python
+    :linenos:
+
+    >>> from sqlalchemy import create_engine
+    >>> engine = create_engine('postgresql://postgres@127.0.0.1:5432')
+    >>> from sqlalchemy import Column, Integer, String
+    >>> from sqlalchemy.ext.declarative import declarative_base
+    >>> Base = declarative_base()
+    >>> Base.metadata.create_all(engine)
+    >>> class User(Base):
+    ...     __tablename__ = 'users'
+    ...     id = Column(Integer, primary_key=True)
+    ...     name = Column(String)
+    ...     fullname = Column(String)
+    ...     password = Column(String)
+    ... 
+    >>> Base.metadata.create_all(engine)
+    >>> from sqlalchemy.orm import sessionmaker
+    >>> from zope.sqlalchemy import ZopeTransactionExtension
+    >>> Session = sessionmaker(bind=engine, extension=ZopeTransactionExtension())
+
+Now, let's set up a ZODB connection, like we learned in the previous chapters:
+
+.. code-block:: python
+    :linenos:
+
+    >>> from ZODB import DB, FileStorage
+
+    >>> storage = FileStorage.FileStorage('test.fs')
+    >>> db = DB(storage)
+    >>> connection = db.open()
+    >>> root = connection.root()
+
+We're ready for adding a user to the relational database table. Right after that,
+we add some data to the ZODB using the user name as key:
+
+.. code-block:: python
+    :linenos:
+
+    >>> import transaction
+    >>> session.add(User(id=1, name='John', fullname='John Smith', password='123'))
+    >>> root['John'] = 'some data that goes into the object database'
+
+Since both the ZopeTransactionExtension and the ZODB connection join the
+transaction automatically, we can just make the changes we want and be ready to
+commit the transaction immediately.
+
+.. code-block:: python
+
+    >>> transaction.commit()
+
+Again, both the SQLAlchemy and the ZODB data managers joined the transaction, so
+that we can commit the transaction and both backends save the data. If there's a
+problem with one of the backends, the transaction is aborted in both regardless
+of the state of the other. It's also possible to abort the transaction manually,
+of course, causing a rollback on both backends as well.
 
 The two-phase commit protocol in practice
 =========================================
 
+Now that we have seen how transactions work in practice, let's take a deeper
+look at the two-phase commit protocol that we described briefly at the start of
+this chapter.
 
+The last few examples have used the ZopeTransactionExtension from the
+zope.sqlalchemy package, so we'll look at parts of its code to illustrate the
+protocol steps. The complete code can be found at
+http://svn.zope.org/zope.sqlalchemy/trunk/.
 
-Things to keep in mind about transactions
-=========================================
+The ZopeTransactionExtension uses SQLAlchemy's SessionExtension mechanism to
+make sure that after a session has begun an instance of the zope.sqlalchemy
+data manager joins the current transaction. Once this is accomplished, the
+SQLAlchemy session can be made to behave acording to the two-phase commit
+protocol. That is, a call to transaction.commit() will make sure to call the
+zope.sqlalchemy data manager in addition to any other data managers that have
+joined the transaction.
+
+To be part of the two-phase commit, a data manager needs to implement some
+specific methods. Some people call this a contract, others call it an
+interface. The important part is that the transaction manager expects to be
+able to call the methods, so every data manager should have them. if it intends
+to participate in the two-phase commit. The contract or interface that the
+zope.sqlalchemy implements is named IDataManager (I stands for Interface, of
+course).
+
+We'll now go through each step of the two-phase commit methods in order, as
+declared by the IDataManager interface. Once the commit begins, the methods
+are called in the order that they are listed, except for tpc_finish and
+tpc_abort, which are only called if the transaction succeeds (tpc_finish) or
+fails (tpc_abort).
+
+abort
+-----
+
+Outside of the two-phase commit proper, a transaction can be aborted before the
+commit is even attempted, in case we come across some error condition that makes
+it impossible to commit. The abort method is used for aborting a transaction and
+forgetting all changes, as well as end the participation of a data manager in the
+current transaction.
+
+The zope.sqlalchemy data manager uses it for closing the SQLAlchemy session too:
+
+.. code-block:: python
+    :linenos:
+
+    def abort(self, trans):
+        if self.tx is not None:
+            self._finish('aborted')
+
+The _finish method called on line 3 is responsible for closing the session and is
+only called if there's an actual transaction associated with this data manager:
+
+.. code-block:: python
+    :linenos:
+
+    def _finish(self, final_state):
+        assert self.tx is not None
+        session = self.session
+        del _SESSION_STATE[id(self.session)]
+        self.tx = self.session = None
+        self.state = final_state
+        session.close()
+
+As we'll see, the cleanup work done by the _finish method is also used by other
+two-phase commit steps.
+
+tpc_begin
+---------
+
+The two-phase commit is initiated when the commit method is called on the
+transaction, like we did in many examples above. The tpc_begin method is called
+at the start of the commit to perform any necessary steps for saving the data.
+
+In the case of SQLAlchemy the very first thing that is needed is to flush the
+session, so that all work performed is ready to be committed:
+
+.. code-block:: python
+    :linenos:
+
+    def tpc_begin(self, trans):
+        self.session.flush()
+
+commit
+------
+
+This is the step where data managers need to prepare to save the changes and
+make sure that any conflicts or errors that could occur during the save operation
+are handled. Changes should be ready but not made permanent, because the
+transaction could still be aborted if other transaction managers are not able to
+commit.
+
+The zope.sqlalchemy data manager here just makes sure that some work has been
+actually performed and if not goes ahead and calls _finish to end the transaction:
+
+.. code-block:: python
+    :linenos:
+
+    def commit(self, trans):
+        status = _SESSION_STATE[id(self.session)]
+        if status is not STATUS_INVALIDATED:
+            self._finish('no work')
+
+tpc_vote
+--------
+
+The last chance for a data manager to make sure that the data can be saved is
+the vote. The way to vote 'no' is to raise an exception here.
+
+The zope.sqlalchemy data manager simply calls prepare on the SQLAlchemy
+transaction here, which will itself raise an exception if there are any problems:
+
+.. code-block:: python
+    :linenos:
+
+    def tpc_vote(self, trans):
+        if self.tx is not None:
+            self.tx.prepare()
+            self.state = 'voted'
+
+tpc_finish
+----------
+
+This method is only called if the manager voted 'yes' (no exceptions raised)
+during the voting step. This makes the changes permanent and should never fail.
+Any errors here could leave the database in an inconsistent state. In other
+words, only do things here that are guaranteed to work or you may have a
+serious error in your hands.
+
+The zope.sqlalchemy data manager calls the SQLAlchemy transaction commit and
+then calls _finish to perform some cleanup:
+
+.. code-block:: python
+    :linenos:
+
+    def tpc_finish(self, trans):
+        if self.tx is not None:
+            self.tx.commit()
+            self._finish('committed')
+
+tpc_abort
+---------
+
+This method is only called if the manager voted 'no' by raising an exception
+during the voting step. It abandons all changes and ends the transaction. Just
+like with the tpc_finish step, an error here is a serious condition.
+
+The zope.sqlalchemy data manager calls the SQLAlchemy transaction rollback here,
+then performs the usual cleanup:
+
+.. code-block:: python
+    :linenos:
+
+    def tpc_abort(self, trans):
+        if self.tx is not None: # we may not have voted, and been aborted already
+            self.tx.rollback()
+            self._finish('aborted commit')
+
+summary
+-------
+
+As we showed, the two-phase commit consists on a series of methods that are
+called by the transaction manager on all participating data managers. Each data
+manager is responsible for making its respective backend perform the required
+actions.
+
+More features and things to keep in mind about transactions
+===========================================================
+
+We now know the basics about how to use the transaction package to control any
+number of backends using available data managers. There are some other features
+that we haven't mentioned and some things to be aware of when using this
+package. We'll cover a few of them in this section.
+
+Joining a transaction
+---------------------
+
+Both the zope.sqlalchemy and the ZODB packages make their data managers join
+the current transaction automatically, but this doesn't have to be always the
+case. If you are writing your own package that uses transaction you will need
+to explicitly make your data managers join the current transaction. This can be
+done using the transaction machinery:
+
+.. code-block:: python
+    :linenos:
+
+    import transaction
+    import SomeDataManager
+    current = transaction.get()
+    current.join(SomeDataManager())
+
+To join the current transaction, you use transaction.get() to get it and then
+call the join method, passing an instance of your data manager that will be
+joining that transaction from then on.
+
+Before-commit hooks
+-------------------
+
+In some cases, it may be desirable to execute some code right before a
+transaction is committed. For example, if an operation needs to be performed
+on all objects changed during a transaction, it might be better to call it once
+at commit time instead of every time an object is changed, which could slow
+things down. A pre-commit hook on the transaction is available for this:
+
+.. code-block:: python
+    :linenos:
+
+    def some_operation(args, kws):
+        print "operating..."
+        for arg in args:
+            print arg
+        for k,v in kws:
+            print k,v
+        print "...done"
+
+    import transaction
+    current = transaction.get()
+    current.addBeforeCommitHook(some_operation, args=(1,2), kws={'a':1})
+
+In this example the hook some_operation will be registered and later called when
+the commit process is started. You can pass to the hook funtion any number of
+positional arguments as a tuple and also key/value pairs as a dictionary.
+
+It's possible to register any number of hooks for a given transaction. They will
+be called in the order that they were registered. It's also possible to register
+a new hook from within the hook function itself, but care must be taken not to
+create an infinite loop doing this.
+
+Note that a registered hook is only active for the transaction in question. If
+you want a later transaction to use the same hook, it has to be registered again.
+The getBeforeCommitHooks method of a transaction will return a tuple for each
+hook, with the registered hook, args and kws in the order in which they would be
+invoked at commit time.
+
+After-commit hooks
+-------------------
+
+After-commit hooks work in the same way as before-commit hooks, except that they
+are called after the transaction succeeds or aborts. The hook function is
+passed a boolean argument with the result of the commit, with True signifying a
+successful transaction and False an aborted one.
+
+.. code-block:: python
+    :linenos:
+
+    def some_operation(success, args, kws):
+        if success:
+            print "transaction succeeded"
+        else:
+            print "transaction failed"
+
+    import transaction
+    current = transaction.get()
+    current.addAfterCommitHook(some_operation, args=(1,2), kws={'a':1})
+
+The getAfterCommitHooks method of a transaction will return a tuple for each
+hook, with the registered hook, args and kws in the order in which they would be
+invoked after commit time.
+
+Synchronizers
+-------------
+
+A synchronizer is an object that must implement beforeCompletion and
+afterCompletion methods. It's registered with the transaction manager, which
+calls beforeCompletion when it starts a top-level two-phase commit and 
+afterCompletion when the transaction is committed or aborted.
+
+.. code-block:: python
+    :linenos:
+
+    class synch(object):
+        def beforeCompletion(self, transaction):
+            print "Commit started"
+        def afterCompletion(self, transaction):
+            print "Commit finished"
+
+    import transaction
+    transaction.manager.registerSynch(synch)
+
+Synchronizers have the advantage that they have to be registered only once to
+participate in all transactions managed by the transaction manager with which
+they are registered. However, the only argument that is passed to them is the
+transaction itself.
+
+Dooming a transaction
+---------------------
+
+There are cases where we encounter a problem that requires aborting a
+transaction, but we still need to run some code after that regardless of the
+transaction result. For example, in a web application it might be necessary to
+finish validating all the fields of a form even if the first one does not
+pass, to get all possible errors for showing to the user at the end of the
+request.
+
+This is why the transaction package allows us to doom a transaction. A doomed
+transaction behaves the same way as an active transaction but if an attempt to
+commit it is made, it raises an error and thus forces an abort.
+
+To doom a transaction we simply call doom on it:
+
+.. code-block:: python
+    :linenos:
+
+    >>> import transaction
+    >>> current = transaction.get()
+    >>> current.doom()
+    
+The isDoomed method can be used to find out if a transaction is already doomed:
+
+.. code-block:: python
+    :linenos:
+
+    >>> current.isDoomed()
+    True
+
+Context manager support
+-----------------------
+
+Instead of calling commit or abort explicitly to define transaction boundaries,
+its possible to use the context manager protocol and define the boundaries
+using the with statement. For example, in our SQLAlchemy examples above, we could
+have used this code after setting up our session:
+
+.. code-block:: python
+    :linenos:
+
+    import transaction
+    session = Session()
+    with transaction:
+        session.add(User(id=1, name='John', fullname='John Smith', password='123'))
+        session.add(User(id=2, name='John', fullname='John Watson', password='123'))
+
+We can have as many statements as we like inside the with block. If an exception
+occurs, the transaction will be aborted at the end. Otherwise, it will be 
+committed.
+    
+
+Take advantage of the notes feature
+-----------------------------------
+
+A transaction has a description that can be set using its note method. This is
+very useful for logging information about a transaction, which can then be
+analyzed for errors or to collect statistics about usage. It is considered a
+good practice to make use of this feature.
+
+The transaction notes have to be handled and saved by the storage in use or they
+can be logged. If the storage doesn't handle them and they are needed, the
+application must provide a way to do it.
+
+The following example assumes the session was set up using SQLAlchemy, like in
+the examples above:
+
+.. code-block:: python
+    :linenos:
+
+    import logging
+    
+    import transaction
+
+    from sqlalchemy import create_engine
+    from sqlalchemy import Column, Integer, String
+    from sqlalchemy.ext.declarative import declarative_base
+    from sqlalchemy.orm import sessionmaker
+    from zope.sqlalchemy import ZopeTransactionExtension
+
+    logging.basicConfig()
+    log = logging.getLogger('example')
+    
+    engine = create_engine('postgresql://postgres@127.0.0.1:5432')
+    Base = declarative_base()
+    Base.metadata.create_all(engine)
+
+    class User(Base):
+        __tablename__ = 'users'
+        id = Column(Integer, primary_key=True)
+        name = Column(String)
+        fullname = Column(String)
+        password = Column(String)
+    
+    Base.metadata.create_all(engine)
+    Session = sessionmaker(bind=engine, extension=ZopeTransactionExtension())
+
+    session = Session()
+    current = transaction.get()
+    session.add(User(id=1, name='John', fullname='John Smith', password='123'))
+    note = "added user John with id 1"
+    current.note(note)
+    log.warn(note)
+    
+This example is very simple and will log the transaction even if it fails, but
+the intention was to give an idea of how transaction notes work and can be used.
 
 Avoid long running transactions
 -------------------------------
 
 
 
-handling conflict errors
-------------------------
+Application developers must handle concurrency
+----------------------------------------------
+
+
+
+Retrying transactions
+---------------------
 
 
 
