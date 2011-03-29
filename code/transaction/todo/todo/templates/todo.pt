@@ -9,7 +9,7 @@
 <body>
   <h1>Todo List</h1>
   <p tal:condition="status"><b>$status</b></p>
-  <form>
+  <form method="POST">
     <table tal:condition="tasks">
       <tr tal:repeat="task tasks">
         <td>
@@ -23,7 +23,7 @@
         </td>
       </tr>
     </table>
-    <p>
+    <p tal:condition="tasks">
       <input type="submit" name="submit" value="done" />
       <input type="submit" name="submit" value="not done" />
       <input type="submit" name="submit" value="delete" />

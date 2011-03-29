@@ -3,8 +3,6 @@ from todo.resources import Root
 
 def main(global_config, **settings):
     config = Configurator(root_factory=Root, settings=settings)
-    config.add_view('todo.views.todo_view',
-                    context='todo:resources.Root',
-                    renderer='todo:templates/todo.pt')
+    config.scan()
     return config.make_wsgi_app()
 
