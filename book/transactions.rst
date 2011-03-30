@@ -794,9 +794,6 @@ The transaction notes have to be handled and saved by the storage in use or they
 can be logged. If the storage doesn't handle them and they are needed, the
 application must provide a way to do it.
 
-The following example assumes the session was set up using SQLAlchemy, like in
-the examples above:
-
 .. code-block:: python
     :linenos:
 
@@ -835,22 +832,112 @@ the examples above:
     log.warn(note)
     
 This example is very simple and will log the transaction even if it fails, but
-the intention was to give an idea of how transaction notes work and can be used.
-
-Avoid long running transactions
--------------------------------
-
-
+the intention was to give an idea of how transaction notes work and how they
+could be used.
 
 Application developers must handle concurrency
 ----------------------------------------------
 
+Reading through this chapter, the question might have occurred to you about how
+the transaction package handles concurrent edits to the same information. The
+answer is it doesn't, the application developer has to take care of that.
 
+The most common type of concurrency problem, is when a transaction can't be
+committed because another transaction has a lock on the resources to be
+modified.  This and other similar errors are called transient errors and 
+they are the easiest to handle. Simply retrying the transaction one or more
+times is usually enough to get it committed in this case.
+
+This is so common that the default transaction manager will try to find a
+method named should_retry on each data manager whenever an error occurs during
+transaction processing. This method gets the error instance as a parameter and
+must return True if the transaction should be retried and False otherwise.
+
+For example, here's how the zope.sqlalchemy data manager defines this method:
+
+.. code-block:: python
+    :linenos:
+
+    def should_retry(self, error):
+        if isinstance(error, ConcurrentModificationError):
+            return True
+        if isinstance(error, DBAPIError):
+            orig = error.orig
+            for error_type, test in _retryable_errors:
+                if isinstance(orig, error_type):
+                    if test is None:
+                        return True
+                    if test(orig):
+                        return True
+
+First, the method checks if the error is an instance of the SQLAlchemy
+ConcurrentModificationError. If this is the case, odds are that retrying the
+transaction has a good chance of succeeding, so True is returned.
+
+After that, if the error is some kind of DBAPIError, again as defined by
+SQLAlchemy, the data manager checks the error against its own list of
+retryable exceptions. If there's a match, there are two possibilities: if a
+test function was not defined for the error in question, True is immediately
+returned. However, if there's a test function defined, the error is passed to
+it to verify wheter it's really retryable or not. Again, if it is, True is
+returned.
+
+This strategy should be enough to handle a good number of transient errors
+and can be tailored to whatever backend you are using if you are willing to
+create your own data manager.
+
+There are other kinds of conflicts that can occur during a transaction that
+must be caught and handled by the application, but these are usually
+application-specific and must be planned for and solved by the developer.
 
 Retrying transactions
 ---------------------
 
+Since retrying a transaction is the usual solution for transient errors,
+applications that use the transaction package have to be prepared to do that
+easily.
 
+A simple for loop with a try: except clause could be enough, but that can get
+very ugly very quickly. Fortunately, transaction managers provide a helper for
+this case. Here's an example, which assumes that we have performed the same
+SQLAlchemy setup that we have used in previous examples:
+
+.. code-block:: python
+    :linenos:
+
+    import transaction
+
+    session = Session()
+    current = transaction.get()
+
+    for attempt in transaction.manager.attempts():
+        with attempt:
+            session.add(User(id=1, name='John', fullname='John Smith', password='123'))
+            session.add(User(id=2, name='John', fullname='John Watson', password='123'))
+    
+The attempts method of the transaction manager returns an iterator, which by
+default will try the transaction three times. It's possible to pass a
+different number to the attempts call to change that. If a transient error is
+raised while processing the transaction, it is retried up to the specified
+number of tries.
+
+The data manager is responsible for rasing the correct kind of exception here,
+which should be a subclass of transaction.interfaces.TransientError.
+
+Avoid long running transactions
+-------------------------------
+
+We have seen that transient errors are many times the result of locked
+resources or busy backends. One important lesson to take from this is that
+avoiding long transactions is a very good idea, because the quicker a
+transaction is finished, the quicker another one can start, which minimizes
+retries and reduces the load on the backend. Uncommitted transactions in
+many backends are stored in memory, so a big number of changes on a single
+transaction can eat away systems resources very fast.
+
+The developer should look for ways of getting the required work done as
+fast as possible. For example, if a lot of changes are required at once, the
+application could use batching to avoid committing the whole bunch in one go.
 
 Writing our own data manager
 ============================
