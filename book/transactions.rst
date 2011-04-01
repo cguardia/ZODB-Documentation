@@ -942,7 +942,177 @@ application could use batching to avoid committing the whole bunch in one go.
 Writing our own data manager
 ============================
 
+By now we have enough knowledge about how the transaction package implements
+transactions to create our first data manager. Let's create a simple manager
+that uses the Python pickle module for storing pickled data.
 
+We will use a very simple design: the data manager will behave like a
+dictionary. We will be able to perform basic dictionary operations, like
+setting the value of a new key or changing an existing one. When we commit the
+transaction, the dictionary items will be stored in a pickle on the filesystem.
+
+The PickleDataManager
+---------------------
+
+The first thing to do is to import a few modules:
+
+.. literalinclude:: ../code/transaction/pickledm.py
+    :linenos:
+    :end-before: PickleDataManager
+
+Nothing surprising here, just what we need to be able to create our class:
+
+.. literalinclude:: ../code/transaction/pickledm.py
+    :linenos:
+    :lines: 5-7 
+
+We define a class, which we'll call PickleDataManager and assign the default
+transaction manager as its transaction manager. Now for the longest method of
+our data manager, which turns out to be __init__:
+
+.. literalinclude:: ../code/transaction/pickledm.py
+    :linenos:
+    :pyobject: __init__
+
+The initialization method accepts an optional pickle_path parameter, which is
+the path on the filesystem where the pickle file will be stored. For this
+example we are not going to worry a lot about this. The important thing is that
+once we have the path, we try to open an existing pickle file in lines 3-6. If
+it doesn't exists we just assign None.
+
+We will use a dictionary named 'uncommitted' as a work area for our data manager.
+If no data file existed, it will be an empty dictionary. If there is a data file,
+we try to open it and assign its value to our work area (lines 8-12).
+
+Any changes that we do to our data will be made on the uncommitted dictionary.
+Additionally, we'll need another dictionary to keep a copy of the data as it was
+at the start of the transaction. For this, we copy the uncommitted dictionary
+into another dictionary, which we'll name 'committed'. Using copy is important
+to avoid altering the committed values unintentionally.
+
+We ant our data manager to function as a dictionary, so we need to implement at
+least the basic methods of a dictionary to get it working. The trick is to
+actually make those methods act on the uncommitted dictionary, so that all the
+operations that we perform are stored there.
+
+.. literalinclude:: ../code/transaction/pickledm.py
+    :linenos:
+    :lines: 24-43
+
+These are fairly simple methods. Basically, for each method we call the
+corresponding one on the uncommitted dictionary. Remember this acts as a sort
+of work area and nothing will be stored until we commit.
+
+Now we are ready for the transaction protocol methods. For starters, if we
+decide to abort the transaction before initiating commit, we need to go back to
+the original dictionary values:
+
+.. literalinclude:: ../code/transaction/pickledm.py
+    :linenos:
+    :pyobject: abort
+
+This is very easy to do, since we have a copy of the dictionary as it was at
+the start of the transaction, so we just copy it over.
+
+For the next couple of methods of the two-phase commit protocol, we don't have
+to do anything for our simple data manager:
+
+.. literalinclude:: ../code/transaction/pickledm.py
+    :linenos:
+    :lines: 48-52
+
+The tpc_begin method can be used to get the data about to be committed out of
+any buffers or queues in preparation for the commit, but here we are only using
+a dictionary, so it's ready to go. The commit method is used to prepare
+the data for the commit, but there's also nothing we have to do here.
+
+Now comes the time for voting. We want to make sure that the pickle can be
+created and raise any exceptions here, because the final step of the two-phase
+commit can't fail.
+
+.. literalinclude:: ../code/transaction/pickledm.py
+    :linenos:
+    :pyobject: tpc_vote
+
+We are going to try to dump the pickle to make sure that it will work. We don't
+care about the result now, just if it can be dumpled, so we use devnull for the
+dump. For simplicity, we just check for pickling errors here. Other error
+conditions are possible, like a full drive or other disk errors.
+
+Remember, all that the voting method has to do is to raise an error if there is
+any problem, and the transaction will be aborted in that case. If this happens
+all that we have to do is to copy the committed value into the wrok area, so we
+go back to the starting value.
+
+.. literalinclude:: ../code/transaction/pickledm.py
+    :linenos:
+    :pyobject: tpc_abort
+
+If there were no problems we can now perform the real pickle dump. At this point
+the data in our work area is officially committed, so we can copy it to the
+committed dictionary.
+
+.. literalinclude:: ../code/transaction/pickledm.py
+    :linenos:
+    :pyobject: tpc_finish
+
+That's really all there is to it for a basic data manager. Let's add a bit of an
+advanced feature, though: a savepoint.
+
+.. literalinclude:: ../code/transaction/pickledm.py
+    :linenos:
+    :pyobject: savepoint
+
+To add savepoint functionality, a data manager needs to have a savepoint method
+that returns a savepoint object. The savepoint object needs to be able to
+rollback to the saved state:
+
+.. literalinclude:: ../code/transaction/pickledm.py
+    :linenos:
+    :pyobject: PickleSavepoint
+
+In the savepoint initialization, we keep a reference to the data manager
+instance that called the savepoint. We also copy the uncommitted dictionary to
+another dictionary stored on the savepoint. If the rollback method is ever
+called, we'll copy this value again directly into the data managers work area,
+so that it goes back to the state it was in before the savepoint.
+
+One final method that we'll implement here is sortKey. This method needs to
+return a string value that is used for setting the order of operations when
+more than one data manager participates in a transaction. The keys are sorted
+alphabetically and the different data managers' two-phase commit methods are
+called in the resulting order.
+
+.. literalinclude:: ../code/transaction/pickledm.py
+    :linenos:
+    :pyobject: sortKey
+
+In this case we just return a string with the 'pickledm' identifier, since it's
+not important in what order our data manager is called. There are cases when
+this feature can be very useful. For example, a data manager that does not
+support rollbacks can try to return a key that is sorted last, so that it 
+commits during tpc_vote only if the other backends in the same transaction that
+do support rollback have not rolled back at that point.
+
+Using our data manager
+----------------------
+
+To use our pickle data manager, we just need to instantiate it, make it join a
+transaction, perform dictionary-like operations with it and commit. Here's a
+quick example:
+
+.. code-block:: python
+    :linenos:
+
+    import transaction
+    from pickledm import PickleDataManager
+
+    dm = PickleDataManager
+    t = tranaction.get()
+    t.join(dm)
+    dm['bar'] = 'foo'
+    dm['baz'] = ['s', 'p', 'a', 'm']
+    transaction.commit()
 
 Using transactions in web applications
 ======================================
