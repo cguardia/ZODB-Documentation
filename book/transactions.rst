@@ -1150,10 +1150,136 @@ work with transactions using WSGI.
 Repoze.tm2: transaction aware middleware for WSGI applications
 --------------------------------------------------------------
 
+WSGI is the dominant way to serve Python web applications these days. WSGI
+allows connecting applications together using pipelines and this has spawned
+the development of many middleware packages that wrap an application and
+perform some service at the beginning and ending of a web request.
 
+One of these packages is repoze.tm2, a middleware from the Repoze project
+which uses the transaction package to start a new transaction on every request
+and commit or abort it after the wrapped application finishes its work,
+depending on if there were any errors or not.
+
+It's not necessary to call  commit or abort manually in application code. All
+that's needed is that there is a data manager associated with every backend
+that will participate in the transaction and that this data manager joins the
+transaction explicitly.
+
+To use repoze.tm2, you first need to add it to your WSGI pipeline. If you are
+using PasteDeploy for deploying your applications, that means that the
+repoze.tm2 egg needs to be added to your main pipeline in your .ini
+configuration file::
+
+      [pipeline:main]
+      pipeline =
+              egg:repoze.tm2#tm
+              myapp
+
+In this example, we have an app named 'myapp', which is the main application.
+By adding the repoze.tm2 egg before it, we are asured that a transaction will
+be started before calling the main app.
+
+The same thing can be accomplished in Python easily:
+
+.. code-block:: python
+    :linenos:
+
+    from somewhere import myapp
+    from repoze.tm import TM
+
+    wrapped_app = TM(myapp)
+
+Once repoze.tm2 is in the pipeline, all that's needed is to join each data
+manager that we want to use into the transaction:
+
+.. code-block:: python
+    :linenos:
+
+    import transaction
+    import MyDataManager
+
+    dm = MyDataManager()
+    t = transaction.get()
+    t.join(dm)
+
+That's basically all that there's to it. Any exception raised after this will
+casue the transaction to abort at the end. Otehrwise, the transaction will be
+committed.
+
+Of course, in a web application there may be some conditions which do not
+result on an exception, yet are bad enough to warrant aborting the transaction.
+For example, a 404 or 500 responses from the server indicate errors, even if
+an exception was never raised.
+
+To handle this situation, repoze.tm2 uses the concept of a commit veto. To use
+it you need to define a callback in your application that returns True if the
+transaction should be aborted. In that callback you can analyze the environ and
+request headers and decide if there is information there that makes aborting
+necessary. To illustrate, let's take a look at the default commit veto
+callback included with repoze.tm2:
+
+.. code-block:: python
+    :linenos:
+
+    def commit_veto(environ, status, headers):
+        for header_name, header_value in headers:
+            if header_name.lower() == 'x-tm-abort':
+                return True
+        for bad in ('4', '5'):
+            if status.startswith(bad):
+                return True
+        return False
+
+As you can see, this commit veto looks for a header named 'x-tm-abort' or any
+400 ot 500 response from the server and returns True (abort) if any of these
+conditions applies.
+
+To use your own commit veto you need to configure it into the middleware. On
+PasteDeploy configurations::
+
+    [filter:tm]
+    commit_veto = my.package:commit_veto 
+    
+The same registration using Python:
+
+.. code-block:: python
+    :linenos:
+
+    from otherplace import mywsgiapp
+    from my.package import commit_veto
+
+    from repoze.tm import TM
+    new_wsgiapp = TM(mywsgiapp, commit_veto=commit_veto)
+
+To use the default commit veto, simply substitute the mypackage commit_veto
+with the one from repoze.tm2:
+
+.. code-block:: python
+
+    from repoze.tm import default_commit_veto
+
+Finally, if some code needs to be run at the end of a transaction, there is an
+after-end registry that lets you register callbacks to be used after the
+transaction ends. This can be very useful if you need to perform some cleanup
+at the end, like closing a connection or logging the result of the transaction.
+
+The after-end callback is registered like this:
+
+.. code-block:: python
+    :linenos:
+
+    from repoze.tm import after_end
+    import transaction
+    t = transaction.get()
+    def callback():
+        pass # do the cleanup actions
+    after_end.register(callback, t)
 
 A to-do application using repoze.tm2
 ------------------------------------
 
-
+We'll finish up this long introduction to the transaction package with a
+simple web application to manage a to-do list. We'll use the pickle data
+manager that we developed earlier in this chapter along with the repoze.tm2
+middleware that we just discussed.
 
