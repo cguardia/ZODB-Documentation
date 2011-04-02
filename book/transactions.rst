@@ -1117,7 +1117,35 @@ quick example:
 Using transactions in web applications
 ======================================
 
+Nowadays many development projects happen on the web and many web applications
+require integration of multiple systems or platforms. While the majority of
+applications may still be 100% based on relational database backends, there are
+more and more cases where it becomes necessary to combine traditional backends
+with other types of systems. The transaction package can be very useful in some
+of these projects.
 
+In fact, the Zope web application server, where the ZODB was born, has been
+doing combined transaction processing of this kind for more than a decade now.
+Developers who use applications like the Plone Content Management System still
+take advantage of this functionality today.
+
+For many years, the transaction support in Zope was tightly integrated with the
+ZODB, so it has seen very little use outside of Zope. The ongoing evolution of
+the Python packaging tools and in particular the existence of the Python
+Package Index have influenced many members of the Zope community and this has
+led to a renewed interest in making useful Zope tools available for the benefit
+of the lager Python community.
+
+One project which has been fairly successful in promoting the use of important
+Zope technologies is the Repoze project (http://www.repoze.org). The main
+objective of this project is to bridge Zope technologies and WSGI, the Python
+web server gateway standard. Under this banner, several packages have been
+released to date that allow using some Zope technologies independently of the
+Zope framework itself.
+
+Some of these packages can be used with the ZODB, so we'll have ocassion to
+work with them later, but the one that we will discuss now will allow us to
+work with transactions using WSGI.
 
 Repoze.tm2: transaction aware middleware for WSGI applications
 --------------------------------------------------------------
