@@ -1283,3 +1283,182 @@ simple web application to manage a to-do list. We'll use the pickle data
 manager that we developed earlier in this chapter along with the repoze.tm2
 middleware that we just discussed.
 
+We will use the Pyramid web application framework (http://pylonsproject.org).
+Pyramid is a very flexible framework and it's very easy to get started with
+it. It also allows us to create "single file" applications, which is very
+useful in this case, to avoid lengthy setup instructions or configuration.
+
+To use Pyramid, we recommend creating a virtualenv and installing the Pyramid
+and repoze.tm2 packages there::
+
+    $ virtualenv --no-site-packages todoapp
+    $ cd todoapp
+    $ bin/easy_install pyramid repoze.tm2
+
+The transaction package is a dependency as well, but will be pulled
+automatically by repoze.tm2.
+
+We want to use our pickle data manager too, so copy the pickledm.py file we
+created earlier to the virtualenv root.
+
+Now we are ready to write our application. Start a file named todo.py. Make
+sure it's on the virtualenv root too. Add the following imports there:
+
+.. literalinclude:: ../code/transaction/todo_single_file/todo.py
+    :linenos:
+    :lines: 1-13
+
+You will see some old friends here, like transaction and our pickledm module.
+On line 4 we import the serve method from paste.httpserver, which we will use
+to serve our application. Lines 6 and 7 import the view configuration machinery
+of the Pyranid framework and a Configurator object to configure our
+application. Finally, lines 9 and 10 import the TM wrapper and the commit veto
+function that we discussed in the previous chapter.
+
+Since we have no package to hold our application's files, we have to make sure
+that we can find the page template that we'll use for rendering our app, so we
+set that up next:
+
+.. literalinclude:: ../code/transaction/todo_single_file/todo.py
+    :linenos:
+    :lines: 15-16
+
+In Pyramid, you can define a root object, very similar to what you get when
+you connect to a ZODB database. The root object points to the root of the
+web site:
+
+.. literalinclude:: ../code/transaction/todo_single_file/todo.py
+    :linenos:
+    :pyobject: Root
+
+The root object idea is part of a way of defining the structure of a site
+called traversal. Using traversal, instead of configuring application URLs
+using regular expressions, like many web frameworks, we define a resource
+tree which starts at this root object and could potentially contain
+thousands of other branches. In this case, however, one root object is all
+that we need for our application.
+
+Pyramid allows us to define views as any callable object. In this case, we'll
+use a class to define our views, because this enables us to use the class'
+__init__ method as a common setup area for the collection of individual views
+that we will define.
+
+.. literalinclude:: ../code/transaction/todo_single_file/todo.py
+    :linenos:
+    :lines: 22-28
+
+See how we instantiate our pickle data manager and make it join the current
+transaction. All the views defined in this class will have access to our data
+manager.
+
+Pyramid allows the use of decorators to configure application views. There are
+several predicates that we can use insider a view configuration. For our simple
+to-do application we'll define five views: one for the initial page that will
+be shown when accessing the site and one each for adding, closing, unclosing
+and deleting tasks.
+
+Remember the Root object that we defined above? This is where we finally use it.
+We are going to define the application's main view. It will show all the items
+that we have stored in our pickle data manager.
+
+In Pyramid, a view must return a Response object, but since it's a very common
+thing in web development to use the view to pass some values to a template for
+rendering, there is a renderer predicate in view configuration that lets us
+give a template path so that Pyramid takes care of the rendering. In that case,
+returning a dictionary with the values that the template will use is enough for
+the view.
+
+.. literalinclude:: ../code/transaction/todo_single_file/todo.py
+    :linenos:
+    :lines: 30-34
+
+If you take a look at line 30 above, you'll see that we used the template that
+we defined in line 16 above as a renderer. The context parameter there means
+the object in the site structure that the view will be applied to. Using that,
+Pyramid allows us to assign different views to different resources on the site.
+
+The view configuration mechanism in Pyramid is very powerful and makes it easy
+to assign views which are used or not depending on things like request headers or
+parameter values. In this case, we use the request method, so that this view
+will only be called if the method used is GET.
+
+Notice how on line 32 we use the data manager to get all the stored to-do items
+for showing on the task list.
+
+The next view finally does something transactional. When the request contains
+the parameter 'add' this view will be called and a new to-do item will be
+added to the task list. The renderer is the same template that displays the
+full task list.
+
+.. literalinclude:: ../code/transaction/todo_single_file/todo.py
+    :linenos:
+    :lines: 36-43
+
+Since this view will only be called when the add button is pressed on the form,
+we know that there is a parameter on the request with the name 'text'. This is
+the item that will be added to the task list. In this example application we
+don't expect any other user than ourselves, so we can safely use the time as a
+key for the new item value. We assign that key to the data manager, get the
+updated list of items for sorting and the view is done. Notice that we didn't
+have to call commit even though there was a change, because repoze.tm2 will do
+that for us after the request is completed.
+
+The next few views are almost equal to the add view. In the done view we get a
+list of task ids and mark all of those tasks as completed:
+
+.. literalinclude:: ../code/transaction/todo_single_file/todo.py
+    :linenos:
+    :lines: 45-52
+
+The done view does exactly the reverse, marking the list of tasks as not
+completed:
+
+.. literalinclude:: ../code/transaction/todo_single_file/todo.py
+    :linenos:
+    :lines: 54-62
+Finally, the delete view removes the task with the passed id from our data
+manager. As with all the other views, there's no need to call commit.
+
+.. literalinclude:: ../code/transaction/todo_single_file/todo.py
+    :linenos:
+    :lines: 64-71
+
+That's really the whole application, all we need now is a way to configure it
+and start a server process. We'll set this up so that running todo.py with the
+Python interpreter starts the application:
+
+.. literalinclude:: ../code/transaction/todo_single_file/todo.py
+    :linenos:
+    :lines: 73-79
+
+Pyramid uses a Configurator object to handle application configuration and view
+registration. On line 75 we create a configurator and then on line 76 we call
+its scan method to perform the view registration. Be aware that using the
+decorators to define the views in the code above is not enough for registering
+them. The scan step is required for doing that.
+
+On line 77 we use the configurator to create a WSGI app and then we wrap that
+with the repoze.tm2 middleware, to get our automatic transaction commits at the
+end of each request. We pass in the default_commit_veto as well, so that in the
+event of 4xx or 5xx response, the transaction is aborted.
+
+Finally, on line 79, we use serve to start serving our application with paste's
+http server.
+
+Our application is almost ready to try, we only need to add a todo.pt template
+in the same directory as the todo.py file, with the following contents:
+
+.. literalinclude:: ../code/transaction/todo_single_file/todo.pt
+    :linenos:
+
+You can now run the application and try it out on the browser. From the root of
+the virtualenv type::
+
+    $ bin/python todo.py
+    serving on 0.0.0.0:8080 view at http://127.0.0.1:8080
+
+You can add, remove and compelte tasks and if you restart the application you
+will find the task list is preserved. Try removing the wrapper and see what
+happens then.
+
+

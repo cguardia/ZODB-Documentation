@@ -7,6 +7,9 @@ from paste.httpserver import serve
 from pyramid.view import view_config
 from pyramid.config import Configurator
 
+from repoze.tm import TM
+from repoze.tm import default_commit_veto
+
 from pickledm import PickleDataManager
 
 here = os.path.dirname(os.path.abspath(__file__))
@@ -35,7 +38,6 @@ class TodoView(object):
         text = self.request.params.get('text')
         key = str(time.time())
         self.dm[key] = {'task_description': text, 'task_completed': False}
-        transaction.commit()
         tasks = self.dm.items()
         tasks.sort()
         return { 'tasks': tasks, 'status': 'New task inserted.' }
@@ -45,7 +47,6 @@ class TodoView(object):
         tasks = self.request.params.getall('tasks')
         for task in tasks:
             self.dm[task]['task_completed'] = True
-        transaction.commit()
         tasks = self.dm.items()
         tasks.sort()
         return { 'tasks': tasks, 'status': 'Marked tasks as done.' }
@@ -55,7 +56,6 @@ class TodoView(object):
         tasks = self.request.params.getall('tasks')
         for task in tasks:
             self.dm[task]['task_completed'] = False
-        transaction.commit()
         tasks = self.dm.items()
         tasks.sort()
         return { 'tasks': tasks, 'status': 'Marked tasks as not done.' }
@@ -65,7 +65,6 @@ class TodoView(object):
         tasks = self.request.params.getall('tasks')
         for task in tasks:
             del(self.dm[task])
-        transaction.commit()
         tasks = self.dm.items()
         tasks.sort()
         return { 'tasks': tasks, 'status': 'Deleted tasks.' }
@@ -75,5 +74,6 @@ if __name__ == '__main__':
     config = Configurator(root_factory=Root, settings=settings)
     config.scan()
     app = config.make_wsgi_app()
+    app = TM(app, commit_veto=default_commit_veto)
     serve(app, host='0.0.0.0')
 
