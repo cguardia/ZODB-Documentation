@@ -1372,8 +1372,8 @@ the view.
     :linenos:
     :lines: 30-34
 
-If you take a look at line 30 above, you'll see that we used the template that
-we defined in line 16 above as a renderer. The context parameter there means
+If you take a look at line 1 above, you'll see that we used as a renderer the
+template that we defined before the class. The context parameter there means
 the object in the site structure that the view will be applied to. Using that,
 Pyramid allows us to assign different views to different resources on the site.
 
@@ -1382,7 +1382,7 @@ to assign views which are used or not depending on things like request headers o
 parameter values. In this case, we use the request method, so that this view
 will only be called if the method used is GET.
 
-Notice how on line 32 we use the data manager to get all the stored to-do items
+Notice how on line 3 we use the data manager to get all the stored to-do items
 for showing on the task list.
 
 The next view finally does something transactional. When the request contains
@@ -1432,24 +1432,42 @@ Python interpreter starts the application:
     :lines: 73-79
 
 Pyramid uses a Configurator object to handle application configuration and view
-registration. On line 75 we create a configurator and then on line 76 we call
+registration. On line 3 we create a configurator and then on line 4 we call
 its scan method to perform the view registration. Be aware that using the
 decorators to define the views in the code above is not enough for registering
 them. The scan step is required for doing that.
 
-On line 77 we use the configurator to create a WSGI app and then we wrap that
+On line 5 we use the configurator to create a WSGI app and then we wrap that
 with the repoze.tm2 middleware, to get our automatic transaction commits at the
 end of each request. We pass in the default_commit_veto as well, so that in the
 event of 4xx or 5xx response, the transaction is aborted.
 
-Finally, on line 79, we use serve to start serving our application with paste's
+Finally, on line 7, we use serve to start serving our application with paste's
 http server.
+
+We are done, this is the complete source of the application:
+
+.. literalinclude:: ../code/transaction/todo_single_file/todo.py
+    :linenos:
 
 Our application is almost ready to try, we only need to add a todo.pt template
 in the same directory as the todo.py file, with the following contents:
 
 .. literalinclude:: ../code/transaction/todo_single_file/todo.pt
     :linenos:
+
+Pyramid has bindings for various template languages, but comes with chameleon and
+mako "out of the box". In this case, we used chameleon, but as you can see it's a
+pretty simple form anyway.
+
+The most important part of the template is the loop that starts on line 14. The
+tal:repeat attribute on the <tr> tag means that for every task in the tasks
+variable, the contents of the tag should be repeated. The tasks list comes from the
+dictionary that was returned by the view, you may rememeber.
+
+Each task comes from the data manager items and thus contains a tuple of id (key)
+and task. Each task is itself a tuple of description and status. These values are
+used to populate the form with the task list.
 
 You can now run the application and try it out on the browser. From the root of
 the virtualenv type::
