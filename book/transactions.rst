@@ -973,7 +973,7 @@ our data manager, which turns out to be __init__:
 
 .. literalinclude:: ../code/transaction/pickledm.py
     :linenos:
-    :pyobject: __init__
+    :pyobject: PickleDataManager.__init__
 
 The initialization method accepts an optional pickle_path parameter, which is
 the path on the filesystem where the pickle file will be stored. For this
@@ -1010,7 +1010,7 @@ the original dictionary values:
 
 .. literalinclude:: ../code/transaction/pickledm.py
     :linenos:
-    :pyobject: abort
+    :pyobject: PickleDataManager.abort
 
 This is very easy to do, since we have a copy of the dictionary as it was at
 the start of the transaction, so we just copy it over.
@@ -1033,7 +1033,7 @@ commit can't fail.
 
 .. literalinclude:: ../code/transaction/pickledm.py
     :linenos:
-    :pyobject: tpc_vote
+    :pyobject: PickleDataManager.tpc_vote
 
 We are going to try to dump the pickle to make sure that it will work. We don't
 care about the result now, just if it can be dumpled, so we use devnull for the
@@ -1047,7 +1047,7 @@ go back to the starting value.
 
 .. literalinclude:: ../code/transaction/pickledm.py
     :linenos:
-    :pyobject: tpc_abort
+    :pyobject: PickleDataManager.tpc_abort
 
 If there were no problems we can now perform the real pickle dump. At this point
 the data in our work area is officially committed, so we can copy it to the
@@ -1055,14 +1055,14 @@ committed dictionary.
 
 .. literalinclude:: ../code/transaction/pickledm.py
     :linenos:
-    :pyobject: tpc_finish
+    :pyobject: PickleDataManager.tpc_finish
 
 That's really all there is to it for a basic data manager. Let's add a bit of an
 advanced feature, though: a savepoint.
 
 .. literalinclude:: ../code/transaction/pickledm.py
     :linenos:
-    :pyobject: savepoint
+    :pyobject: PickleDataManager.savepoint
 
 To add savepoint functionality, a data manager needs to have a savepoint method
 that returns a savepoint object. The savepoint object needs to be able to
@@ -1086,7 +1086,7 @@ called in the resulting order.
 
 .. literalinclude:: ../code/transaction/pickledm.py
     :linenos:
-    :pyobject: sortKey
+    :pyobject: PickleDataManager.sortKey
 
 In this case we just return a string with the 'pickledm' identifier, since it's
 not important in what order our data manager is called. There are cases when
@@ -1422,6 +1422,7 @@ completed:
 .. literalinclude:: ../code/transaction/todo_single_file/todo.py
     :linenos:
     :lines: 54-62
+
 Finally, the delete view removes the task with the passed id from our data
 manager. As with all the other views, there's no need to call commit.
 
