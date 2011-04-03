@@ -1209,7 +1209,7 @@ manager that we want to use into the transaction:
     t.join(dm)
 
 That's basically all that there's to it. Any exception raised after this will
-casue the transaction to abort at the end. Otehrwise, the transaction will be
+casue the transaction to abort at the end. Otherwise, the transaction will be
 committed.
 
 Of course, in a web application there may be some conditions which do not
