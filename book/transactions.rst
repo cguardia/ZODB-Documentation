@@ -954,7 +954,8 @@ transaction, the dictionary items will be stored in a pickle on the filesystem.
 The PickleDataManager
 ---------------------
 
-The first thing to do is to import a few modules:
+Let's open a new file and name it pickledm.py. The first thing to do is to
+import a few modules:
 
 .. literalinclude:: ../code/transaction/pickledm.py
     :linenos:
@@ -1093,6 +1094,11 @@ this feature can be very useful. For example, a data manager that does not
 support rollbacks can try to return a key that is sorted last, so that it 
 commits during tpc_vote only if the other backends in the same transaction that
 do support rollback have not rolled back at that point.
+
+For easy reference, here's the full source of our data manager:
+
+.. literalinclude:: ../code/transaction/pickledm.py
+    :linenos:
 
 Using our data manager
 ----------------------
