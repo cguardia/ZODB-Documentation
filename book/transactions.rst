@@ -15,7 +15,7 @@ transaction can be rolled back without having to abort it completely.
 
 The best part is that this transaction mechanism is not tied to the ZODB and
 can be used in Python applications as a general transaction support library.
-Beacuse of this and also because understanding the transaction package is
+Because of this and also because understanding the transaction package is
 important to use the ZODB correctly, this chapter describes the package in
 detail and shows how to use it outside the ZODB.
 
@@ -52,10 +52,10 @@ that it creates the transactions and keeps track of the current one. Whenever
 an application wants to use the transaction machinery, it gets the current
 transaction from the transaction manager before starting any operations
 
-The default transaction manage for the transaction package is thread aware.
+The default transaction manager for the transaction package is thread aware.
 Each thread is associated with a unique transaction.
 
-Application developers will mosty likely never need to create their own
+Application developers will most likely never need to create their own
 transaction managers.
 
 Data Managers
@@ -226,10 +226,6 @@ provided by zope.sqlalchemy.
 In line 6 we create a session. Under the hood, the ZopeTransactionExtension
 makes sure that the current transaction is joined by the zope.sqlalchemy data
 manager, so it's not necessary to explicitly join the transaction in our code.
-
-Note that even though the word zope is part of its name, there is nothing Zope
-specific about the ZopeTransactionExtension, nor does it require installation
-of any zope packages.
 
 Finally, we are able to put some data inside our new table and commit the
 transaction:
