@@ -1316,7 +1316,7 @@ On line 4 we import the serve method from paste.httpserver, which we will use
 to serve our application. Lines 6 and 7 import the view configuration machinery
 of the Pyranid framework and a Configurator object to configure our
 application. Finally, lines 9 and 10 import the TM wrapper and the commit veto
-function that we discussed in the previous chapter.
+function that we discussed in the previous section.
 
 Since we have no package to hold our application's files, we have to make sure
 that we can find the page template that we'll use for rendering our app, so we
