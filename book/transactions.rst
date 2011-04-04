@@ -1465,12 +1465,12 @@ pretty simple form anyway.
 
 The most important part of the template is the loop that starts on line 14. The
 tal:repeat attribute on the <tr> tag means that for every task in the tasks
-variable, the contents of the tag should be repeated. The tasks list comes from the
-dictionary that was returned by the view, you may rememeber.
+variable, the contents of the tag should be repeated. The tasks list comes from
+the dictionary that was returned by the view, you may remember.
 
-Each task comes from the data manager items and thus contains a tuple of id (key)
-and task. Each task is itself a tuple of description and status. These values are
-used to populate the form with the task list.
+The task list comes from the data manager items and thus each of its elements
+contains a tuple of id (key) and task. Each task is itself a tuple of description
+and status. These values are used to populate the form with the task list.
 
 You can now run the application and try it out on the browser. From the root of
 the virtualenv type::
@@ -1478,7 +1478,7 @@ the virtualenv type::
     $ bin/python todo.py
     serving on 0.0.0.0:8080 view at http://127.0.0.1:8080
 
-You can add, remove and compelte tasks and if you restart the application you
+You can add, remove and complete tasks and if you restart the application you
 will find the task list is preserved. Try removing the wrapper and see what
 happens then.
 
