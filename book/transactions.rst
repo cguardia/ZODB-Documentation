@@ -1355,14 +1355,18 @@ transaction. All the views defined in this class will have access to our data
 manager.
 
 Pyramid allows the use of decorators to configure application views. There are
-several predicates that we can use insider a view configuration. For our simple
+several predicates that we can use inside a view configuration. For our simple
 to-do application we'll define five views: one for the initial page that will
 be shown when accessing the site and one each for adding, closing, unclosing
 and deleting tasks.
 
 Remember the Root object that we defined above? This is where we finally use it.
-We are going to define the application's main view. It will show all the items
-that we have stored in our pickle data manager.
+We are going to define the application's main view and the Root object will be
+the context of that view. Context basically means the last object in the URL
+that represents a path to the resource from the root of the resource tree. The
+context object of a view is available at rendering time and can be used to get
+resource specific information. In this case, the main view will show all the
+items that we have stored in our pickle data manager.
 
 In Pyramid, a view must return a Response object, but since it's a very common
 thing in web development to use the view to pass some values to a template for
@@ -1376,13 +1380,14 @@ the view.
     :lines: 30-34
 
 If you take a look at line 1 above, you'll see that we used as a renderer the
-template that we defined before the class. The context parameter there means
-the object in the site structure that the view will be applied to. Using that,
-Pyramid allows us to assign different views to different resources on the site.
+template that we defined before the class. As we explained above, the context
+parameter there means the object in the site structure that the view will be
+applied to. In this case it's the root of the site, though the specific Root
+object is not actually used in the view code.
 
 The view configuration mechanism in Pyramid is very powerful and makes it easy
-to assign views which are used or not depending on things like request headers or
-parameter values. In this case, we use the request method, so that this view
+to assign views which are used or not depending on things like request headers
+or parameter values. In this case, we use the request method, so that this view
 will only be called if the method used is GET.
 
 Notice how on line 3 we use the data manager to get all the stored to-do items
