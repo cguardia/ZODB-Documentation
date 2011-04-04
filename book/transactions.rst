@@ -1300,8 +1300,9 @@ and repoze.tm2 packages there::
 The transaction package is a dependency as well, but will be pulled
 automatically by repoze.tm2.
 
-We want to use our pickle data manager too, so copy the pickledm.py file we
-created earlier to the virtualenv root.
+We want to use our pickle data manager too, so copy the `pickledm.py file
+<https://github.com/cguardia/ZODB-Documentation/raw/master/code/transaction/pickledm.py>`_
+we created earlier to the virtualenv root.
 
 Now we are ready to write our application. Start a file named todo.py. Make
 sure it's on the virtualenv root too. Add the following imports there:
