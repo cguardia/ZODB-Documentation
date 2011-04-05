@@ -1178,7 +1178,7 @@ configuration file::
               myapp
 
 In this example, we have an app named 'myapp', which is the main application.
-By adding the repoze.tm2 egg before it, we are asured that a transaction will
+By adding the repoze.tm2 egg before it, we are assured that a transaction will
 be started before calling the main app.
 
 The same thing can be accomplished in Python easily:
@@ -1205,12 +1205,12 @@ manager that we want to use into the transaction:
     t.join(dm)
 
 That's basically all that there's to it. Any exception raised after this will
-casue the transaction to abort at the end. Otherwise, the transaction will be
+cause the transaction to abort at the end. Otherwise, the transaction will be
 committed.
 
 Of course, in a web application there may be some conditions which do not
 result on an exception, yet are bad enough to warrant aborting the transaction.
-For example, a 404 or 500 responses from the server indicate errors, even if
+For example, all 404 or 500 responses from the server indicate errors, even if
 an exception was never raised.
 
 To handle this situation, repoze.tm2 uses the concept of a commit veto. To use
@@ -1233,7 +1233,7 @@ callback included with repoze.tm2:
         return False
 
 As you can see, this commit veto looks for a header named 'x-tm-abort' or any
-400 ot 500 response from the server and returns True (abort) if any of these
+40x or 50x response from the server and returns True (abort) if any of these
 conditions applies.
 
 To use your own commit veto you need to configure it into the middleware. On
