@@ -82,7 +82,7 @@ The two phase commit protocol
 -----------------------------
 
 The transaction machinery uses a two phase commit protocol for coordinating all
-paticipating data managers in a transaction. The two phases work like follows:
+participating data managers in a transaction. The two phases work like follows:
 
  1. The commit process is started.
  2. Each associated data manager prepares the changes to be persistent.
@@ -148,7 +148,7 @@ Hopefully, at this point SQLAlchemy and SQLite (or other database if you are
 feeling adventurous) are installed. To use this combination with the transaction
 package, we need a data manager that knows how to talk to SQLAlchemy so that the
 appropriate SQL commands are sent to SQLite whenever an event in the transaction
-lifecycle occurs.
+life-cycle occurs.
 
 Fortunately for us, there is already a package that does this on PyPI, so it's
 just a matter of installing it on our system. The package is called
@@ -240,7 +240,7 @@ transaction:
 Since the transaction was already joined by the zope.sqlalchemy data manager,
 we can just call commit and the transaction is correctly committed. As you can
 see, the integration between SQLAlchemy and the transaction machinery is pretty
-transaparent.
+transparent.
 
 Aborting transactions
 ---------------------
@@ -454,7 +454,7 @@ http://svn.zope.org/zope.sqlalchemy/trunk/.
 The ZopeTransactionExtension uses SQLAlchemy's SessionExtension mechanism to
 make sure that after a session has begun an instance of the zope.sqlalchemy
 data manager joins the current transaction. Once this is accomplished, the
-SQLAlchemy session can be made to behave acording to the two-phase commit
+SQLAlchemy session can be made to behave according to the two-phase commit
 protocol. That is, a call to transaction.commit() will make sure to call the
 zope.sqlalchemy data manager in addition to any other data managers that have
 joined the transaction.
@@ -661,7 +661,7 @@ things down. A pre-commit hook on the transaction is available for this:
     current.addBeforeCommitHook(some_operation, args=(1,2), kws={'a':1})
 
 In this example the hook some_operation will be registered and later called when
-the commit process is started. You can pass to the hook funtion any number of
+the commit process is started. You can pass to the hook function any number of
 positional arguments as a tuple and also key/value pairs as a dictionary.
 
 It's possible to register any number of hooks for a given transaction. They will
@@ -875,7 +875,7 @@ SQLAlchemy, the data manager checks the error against its own list of
 retryable exceptions. If there's a match, there are two possibilities: if a
 test function was not defined for the error in question, True is immediately
 returned. However, if there's a test function defined, the error is passed to
-it to verify wheter it's really retryable or not. Again, if it is, True is
+it to verify whether it's really retryable or not. Again, if it is, True is
 returned.
 
 This strategy should be enough to handle a good number of transient errors
@@ -917,7 +917,7 @@ different number to the attempts call to change that. If a transient error is
 raised while processing the transaction, it is retried up to the specified
 number of tries.
 
-The data manager is responsible for rasing the correct kind of exception here,
+The data manager is responsible for raising the correct kind of exception here,
 which should be a subclass of transaction.interfaces.TransientError.
 
 Avoid long running transactions
@@ -1032,13 +1032,13 @@ commit can't fail.
     :pyobject: PickleDataManager.tpc_vote
 
 We are going to try to dump the pickle to make sure that it will work. We don't
-care about the result now, just if it can be dumpled, so we use devnull for the
+care about the result now, just if it can be dumped, so we use devnull for the
 dump. For simplicity, we just check for pickling errors here. Other error
 conditions are possible, like a full drive or other disk errors.
 
 Remember, all that the voting method has to do is to raise an error if there is
 any problem, and the transaction will be aborted in that case. If this happens
-all that we have to do is to copy the committed value into the wrok area, so we
+all that we have to do is to copy the committed value into the work area, so we
 go back to the starting value.
 
 .. literalinclude:: ../code/transaction/pickledm.py
@@ -1145,7 +1145,7 @@ web server gateway standard. Under this banner, several packages have been
 released to date that allow using some Zope technologies independently of the
 Zope framework itself.
 
-Some of these packages can be used with the ZODB, so we'll have ocassion to
+Some of these packages can be used with the ZODB, so we'll have occasion to
 work with them later, but the one that we will discuss now will allow us to
 work with transactions using WSGI.
 
@@ -1314,7 +1314,7 @@ sure it's on the virtualenv root too. Add the following imports there:
 You will see some old friends here, like transaction and our pickledm module.
 On line 4 we import the serve method from paste.httpserver, which we will use
 to serve our application. Lines 6 and 7 import the view configuration machinery
-of the Pyranid framework and a Configurator object to configure our
+of the Pyramid framework and a Configurator object to configure our
 application. Finally, lines 9 and 10 import the TM wrapper and the commit veto
 function that we discussed in the previous section.
 
@@ -1357,7 +1357,7 @@ manager.
 Pyramid allows the use of decorators to configure application views. There are
 several predicates that we can use inside a view configuration. For our simple
 to-do application we'll define five views: one for the initial page that will
-be shown when accessing the site and one each for adding, closing, unclosing
+be shown when accessing the site and one each for adding, closing, reopening
 and deleting tasks.
 
 Remember the Root object that we defined above? This is where we finally use it.
