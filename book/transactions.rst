@@ -775,7 +775,9 @@ have used this code after setting up our session:
 
 We can have as many statements as we like inside the with block. If an exception
 occurs, the transaction will be aborted at the end. Otherwise, it will be 
-committed.
+committed. Note that if you doom the transaction inside the context, it
+will still try to commit which will result in a DoomedTransaction
+exception.
     
 
 Take advantage of the notes feature
