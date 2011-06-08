@@ -769,7 +769,7 @@ have used this code after setting up our session:
 
     import transaction
     session = Session()
-    with transaction:
+    with transaction.manager:
         session.add(User(id=1, name='John', fullname='John Smith', password='123'))
         session.add(User(id=2, name='John', fullname='John Watson', password='123'))
 
