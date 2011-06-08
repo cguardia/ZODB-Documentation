@@ -760,7 +760,7 @@ Context manager support
 -----------------------
 
 Instead of calling commit or abort explicitly to define transaction boundaries,
-its possible to use the context manager protocol and define the boundaries
+it's possible to use the context manager protocol and define the boundaries
 using the with statement. For example, in our SQLAlchemy examples above, we could
 have used this code after setting up our session:
 
