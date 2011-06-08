@@ -1170,7 +1170,9 @@ transaction explicitly.
 To use repoze.tm2, you first need to add it to your WSGI pipeline. If you are
 using PasteDeploy for deploying your applications, that means that the
 repoze.tm2 egg needs to be added to your main pipeline in your .ini
-configuration file::
+configuration file:
+
+.. code-block:: ini
 
       [pipeline:main]
       pipeline =
@@ -1237,7 +1239,9 @@ As you can see, this commit veto looks for a header named 'x-tm-abort' or any
 conditions applies.
 
 To use your own commit veto you need to configure it into the middleware. On
-PasteDeploy configurations::
+PasteDeploy configurations:
+
+.. code-block:: ini
 
     [filter:tm]
     commit_veto = my.package:commit_veto 
@@ -1463,6 +1467,7 @@ Our application is almost ready to try, we only need to add a todo.pt template
 in the same directory as the todo.py file, with the following contents:
 
 .. literalinclude:: ../code/transaction/todo_single_file/todo.pt
+    :language: xml
     :linenos:
 
 Pyramid has bindings for various template languages, but comes with chameleon and
@@ -1479,7 +1484,9 @@ contains a tuple of id (key) and task. Each task is itself a tuple of descriptio
 and status. These values are used to populate the form with the task list.
 
 You can now run the application and try it out on the browser. From the root of
-the virtualenv type::
+the virtualenv type:
+
+.. code-block:: console
 
     $ bin/python todo.py
     serving on 0.0.0.0:8080 view at http://127.0.0.1:8080
