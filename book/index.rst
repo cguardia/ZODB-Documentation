@@ -25,6 +25,7 @@ Contents:
    installing.rst
    working.rst
    transactions.rst
+   api.rst
 
 Indices and tables
 ==================
