@@ -54,27 +54,29 @@ Connections
 
 Transactions
 ------------
-.. function:: transaction.begin()
+.. module:: transaction
+
+.. function:: begin()
 
   Begin a new transaction in the default manager.
 
-.. function:: transaction.commit()
+.. function:: commit()
 
   Commit the current transaction in the default manager.
 
-.. function:: transaction.abort()
+.. function:: abort()
 
   Abort the current transaction in the default manager.
 
-.. function:: transaction.doom()
+.. function:: doom()
 
   Doom the current transaction in the default manager.
 
-.. function:: transaction.isDoomed()
+.. function:: isDoomed()
 
   Check if the current transaction in the default manager is doomed.
 
-.. function:: transaction.savepoint(optimistic=False)
+.. function:: savepoint(optimistic=False)
 
     Create a savepoint from the current transaction in the default manager.
 
@@ -84,11 +86,11 @@ Transactions
 
     An :class:`~transaction.interfaces.ISavepoint` object is returned.
 
-.. function:: transaction.get()
+.. function:: get()
 
   Get the current transaction from the default manager.
 
-.. data:: transaction.manager
+.. data:: manager
 
   Default transaction manager.
 
