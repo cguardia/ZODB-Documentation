@@ -1,0 +1,33 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+     xmlns:tal="http://xml.zope.org/namespaces/tal"
+     xmlns:metal="http://xml.zope.org/namespaces/metal">
+
+<head>
+
+    <title>Birdie Sign Up</title>
+
+</head>
+
+<body>
+  <div id="content">
+
+      <h1>Birdie Sign Up</h1>
+
+      <div id="message">
+          <p>${message}</p>
+      </div>
+
+      <form action="${app_url}/join" method="POST">
+         Full name: <input type="text" name="fullname" value="${fullname}" />
+         User name: <input type="text" name="userid" value="${userid}" />
+         Password: <input type="password" name="password" value="" />
+         Confirm: <input type="password" name="confirm" value="" />
+         About:<br />
+         <textarea name="about">${about}</textarea>
+         <input type="submit" value="join" />
+      </form>
+
+  </div>
+
+</body>
+</html>

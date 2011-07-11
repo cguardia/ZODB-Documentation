@@ -1,0 +1,8 @@
+To do
+=====
+
+[ ] Tests!
+[ ] CSS!
+[ ] Add avatar images to user objects.
+[ ] Add support for @userid syntax.
+

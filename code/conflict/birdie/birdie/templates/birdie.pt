@@ -1,0 +1,119 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+     xmlns:tal="http://xml.zope.org/namespaces/tal"
+     xmlns:metal="http://xml.zope.org/namespaces/metal">
+
+<head>
+
+    <title>Birdie</title>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.14/jquery-ui.min.js"></script>
+    <script src="${static_url}/jstemplate.js"></script>
+    <script src="${static_url}/jquery.timeago.js"></script>
+    <script src="${static_url}/birdie.js"></script>
+    <script language="javascript" type="text/javascript">var ajax_url = "${app_url}/newest_chirps.json?user_chirps=${user_chirps}&userid=${user.userid}";</script>
+    <script language="javascript" type="text/javascript">
+      //<![CDATA[
+      $(document).ready(function() {
+          // wire the widgets
+          var info = $('#feedinfo')
+              .chirps_info({
+                  selectLastUpdate: '#polled',
+                  selectLastGen: '#last_gen',
+                  selectLastIndex: '#last_index',
+                  selectFeedUrl: '#json_feed_url'
+              });
+          var feedlist = $('#feedlist')
+              .chirps({
+                  ajax_url: ajax_url
+              })
+              .bind('changed.chirps', function(evt, summary_info) {
+                  info.chirps_info('update', summary_info);
+              })
+              .bind('ajaxstatechanged.chirps', function(evt, state, errormsg) {
+              });
+          // get the first items
+          feedlist.chirps('get_items');
+
+          // set automatic update of items
+          setInterval(function() {
+              feedlist.chirps('get_items');
+          }, 120000);
+
+      });
+      //]]>
+    </script>
+
+    <script type="text/tmpl" id="item_row">
+        <div class="feeditem">
+            <div class="thumbnail">
+                <img src="{%= item.avatar %}" />
+            </div>
+
+            <div class="feedtext">
+
+                <div class="username">
+                     <a href="${app_url}/users/{%= item.created_by %}">{%= item.created_by %}</a>
+                </div>
+
+                <div class="chirp">
+                     <em>{%= item.chirp %}</em>
+                    {% if (item.chirp!='') { %}
+                      <br />
+                    {% } %}
+                </div>
+
+            </div>
+
+            <div class="posttime">
+                <abbr class="timeago"
+                      title="{%= item.timeago %}"
+                  >XXX</abbr>
+            </div>
+
+            <div class="visualClear"><!-- --></div>
+        </div>
+    </script>
+
+</head>
+
+<body>
+  <div id="content">
+
+      <h1><a href="${app_url}">Birdie</a></h1>
+
+      <div id="user_info">
+        <img class="avatar" src="${user.avatar}" />
+        <span class="fullname">${user.fullname}</span>
+        <span class="follows">follows: ${len(user.follows)}</span>
+        <span class="followers">followers: ${len(user.followers)}</span>
+        <p class="about">${user.about}</p>
+
+        <div class="follow" tal:condition="user_chirps == True and userid != user.userid">
+            <a href="${user_url}follow"
+               tal:condition="user.userid not in original_user.follows">
+              follow
+            </a>
+            <a href="${user_url}unfollow"
+               tal:condition="user.userid in original_user.follows">
+              unfollow
+            </a>
+        </div>
+      </div>
+
+      <div id="user_actions">
+        <span>What are you up to?</span>
+        <a href="${app_url}/logout">Logout</a>
+      </div>
+
+      <form action="${app_url}" method="POST">
+        <textarea name="chirp" id="chirp" rows="3" cols="80"></textarea>
+        <input type="submit" value="chirp" />
+      </form>
+
+      <div id="feedlist"></div>
+
+  </div>
+
+</body>
+</html>
