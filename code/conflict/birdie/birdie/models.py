@@ -4,8 +4,12 @@ from persistent.list import PersistentList
 
 from appendonly import AppendStack
 
+from cryptacular.bcrypt import BCRYPTPasswordManager
+
 from pyramid.security import Allow
 from pyramid.security import Authenticated
+
+crypt = BCRYPTPasswordManager()
 
 class Birdie(PersistentMapping):
     __parent__ = __name__ = None
@@ -43,14 +47,15 @@ class Chirps(Persistent):
 class Users(PersistentMapping):
     def check(self, userid, password):
         if userid in self:
-            if self[userid].password == password:
+            hashed_password = self[userid].password
+            if crypt.check(hashed_password, password):
                 return True
         return False
 
 class User(object):
     def __init__(self, users, userid, password, fullname, about):
         self.userid = userid
-        self.password = password
+        self.password = crypt.encode(password)
         self.fullname = fullname
         self.about = about
         self.avatar = "/static/avatar.jpg"

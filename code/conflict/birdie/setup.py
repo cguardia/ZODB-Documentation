@@ -13,6 +13,7 @@ requires = [
     'repoze.retry',
     'ZODB3',
     'appendonly',
+    'cryptacular',
     'WebError',
     ]
 
