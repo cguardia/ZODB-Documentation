@@ -711,14 +711,14 @@ afterCompletion when the transaction is committed or aborted.
 .. code-block:: python
     :linenos:
 
-    class synch(object):
+    class MySynch(object):
         def beforeCompletion(self, transaction):
             print "Commit started"
         def afterCompletion(self, transaction):
             print "Commit finished"
 
     import transaction
-    transaction.manager.registerSynch(synch)
+    transaction.manager.registerSynch(MySynch())
 
 Synchronizers have the advantage that they have to be registered only once to
 participate in all transactions managed by the transaction manager with which
