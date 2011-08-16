@@ -1229,16 +1229,21 @@ callback included with repoze.tm2:
 
     def commit_veto(environ, status, headers):
         for header_name, header_value in headers:
-            if header_name.lower() == 'x-tm-abort':
+            header_name = header_name.lower()
+            if header_name == 'x-tm':
+                header_value = header_value.lower()
+                if header_value == 'commit':
+                    return False
                 return True
         for bad in ('4', '5'):
             if status.startswith(bad):
                 return True
         return False
 
-As you can see, this commit veto looks for a header named 'x-tm-abort' or any
-40x or 50x response from the server and returns True (abort) if any of these
-conditions applies.
+As you can see, this commit veto looks for a header named ``x-tm`` and
+returns ``True`` if the header's value is not ``commit``; it also returns
+``True`` if there is a 40x or 50x response from the server.  When the commit
+veto returns ``True``, the transaction is aborted.
 
 To use your own commit veto you need to configure it into the middleware. On
 PasteDeploy configurations:
