@@ -649,11 +649,11 @@ things down. A pre-commit hook on the transaction is available for this:
 .. code-block:: python
     :linenos:
 
-    def some_operation(args, kws):
+    def some_operation(*args, **kws):
         print "operating..."
         for arg in args:
             print arg
-        for k,v in kws:
+        for k,v in kws.items():
             print k,v
         print "...done"
 
@@ -687,7 +687,7 @@ successful transaction and False an aborted one.
 .. code-block:: python
     :linenos:
 
-    def some_operation(success, args, kws):
+    def some_operation(success, *args, **kws):
         if success:
             print "transaction succeeded"
         else:
@@ -713,13 +713,15 @@ afterCompletion when the transaction is committed or aborted.
     :linenos:
 
     class MySynch(object):
-        def beforeCompletion(self, transaction):
+        @classmethod
+        def beforeCompletion(cls, transaction):
             print "Commit started"
-        def afterCompletion(self, transaction):
+        @classmethod
+        def afterCompletion(cls, transaction):
             print "Commit finished"
 
     import transaction
-    transaction.manager.registerSynch(MySynch())
+    transaction.manager.registerSynch(MySynch)
 
 Synchronizers have the advantage that they have to be registered only once to
 participate in all transactions managed by the transaction manager with which
