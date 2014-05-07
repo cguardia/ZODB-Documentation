@@ -680,7 +680,7 @@ After-commit hooks
 -------------------
 
 After-commit hooks work in the same way as before-commit hooks, except that they
-are called after the transaction succeeds or aborts. The hook function is
+are called after the transaction commit succeeds or fails. The hook function is
 passed a boolean argument with the result of the commit, with True signifying a
 successful transaction and False an aborted one.
 
@@ -700,6 +700,8 @@ successful transaction and False an aborted one.
 The getAfterCommitHooks method of a transaction will return a tuple for each
 hook, with the registered hook, args and kws in the order in which they would be
 invoked after commit time.
+
+Commit hooks are never called for doomed or explicitly aborted transactions.
 
 Synchronizers
 -------------
