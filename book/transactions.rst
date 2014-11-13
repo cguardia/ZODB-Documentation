@@ -1116,7 +1116,7 @@ quick example:
     import transaction
     from pickledm import PickleDataManager
 
-    dm = PickleDataManager
+    dm = PickleDataManager()
     t = tranaction.get()
     t.join(dm)
     dm['bar'] = 'foo'
