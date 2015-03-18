@@ -364,7 +364,7 @@ The first module, persistent, is the one that handles automatic notification of
 changes to the ZODB. The transaction package provides a general purpose
 transaction management system with two-phase commit which can be useful even
 without using the ZODB, as we'll learn in the next chapter. The other imports
-are the ZODB package and it FileStorage module, for storing the data in the
+are the ZODB package and its FileStorage module, for storing the data in the
 file system.
 
 The database connection will be open when we instantiate our class. We'll
