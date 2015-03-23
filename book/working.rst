@@ -76,7 +76,7 @@ is what we are interested in.
 We need to do two things to turn our app into a simple command shell:
 
 #. Add a class that inherits from the cmd.Cmd class.
-#. For every command that we want to define, add a method named do_<commmand>,
+#. For every command that we want to define, add a method named do_<command>,
    which will be called when the user types that command in the shell.
 
 As you'll see if you browse the complete code that we'll show at the end of the
