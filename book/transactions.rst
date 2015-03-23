@@ -1117,7 +1117,7 @@ quick example:
     from pickledm import PickleDataManager
 
     dm = PickleDataManager()
-    t = tranaction.get()
+    t = transaction.get()
     t.join(dm)
     dm['bar'] = 'foo'
     dm['baz'] = ['s', 'p', 'a', 'm']
