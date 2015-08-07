@@ -131,7 +131,7 @@ PyPi::
     $ easy_install sqlalchemy
 
 This will install the package in your Python environment. You'll need to set up
-a relational database that you can use to work out the examples in the 
+a relational database that you can use to work out the examples in the
 following sections. SQLAlchemy supports most relational backends that you may
 have heard of, but the simplest thing to do is to use SQLite, since it doesn't
 require a separate Python driver. You'll have to make sure that the operating
@@ -166,9 +166,9 @@ A simple demonstration
 
 It's time to show how to use SQLAlchemy together with the transaction package.
 To avoid lengthy digressions, knowledge of how SQLAlchemy works is assumed. If
-you are not familiar with that, reading the tutorial at 
+you are not familiar with that, reading the tutorial at
 http://www.sqlalchemy.org/docs/orm/tutorial.html will give you a good
-enough background to understand what follows. 
+enough background to understand what follows.
 
 After installing the required packages, you may wish to follow along the
 examples using the Python interpreter where you installed them. The first step
@@ -205,7 +205,7 @@ easily:
     >>> Base.metadata.create_all(engine)
 
 The User class is now mapped to the table named 'users'. The create_all method
-in line 13 creates the table in case it doesn't exist already.
+in line 12 creates the table in case it doesn't exist already.
 
 We can now create a session and integrate the zope.sqlalchemy data manager with
 it so that we can use the transaction machinery. This is done by passing a
@@ -219,12 +219,12 @@ Session Extension when creating the SQLAlchemy session:
     >>> Session = sessionmaker(bind=engine, extension=ZopeTransactionExtension())
     >>> session = Session()
 
-In line 5, we create a session class that is bound to the engine that we set up
+In line 3, we create a session class that is bound to the engine that we set up
 earlier. Notice how we pass the ZopeTransactionExtension using the extension
 parameter. This extension connects the SQLAlchemy session with the data manager
 provided by zope.sqlalchemy.
 
-In line 6 we create a session. Under the hood, the ZopeTransactionExtension
+In line 4 we create a session. Under the hood, the ZopeTransactionExtension
 makes sure that the current transaction is joined by the zope.sqlalchemy data
 manager, so it's not necessary to explicitly join the transaction in our code.
 
@@ -266,7 +266,7 @@ the old transaction had ended with the commit, creating a new session joins it
 to the current transaction, which will be a new one as well.
 
 We make a query just to show that our user's fullname is 'John Smith', then we
-change that to 'John Q. Public'. When the transaction is aborted in line 7,
+change that to 'John Q. Public'. When the transaction is aborted in line 8,
 the name is reverted to the old value.
 
 If we create a new session and query the table for our old friend John, we'll
@@ -312,7 +312,7 @@ everything and setup the same table we used in our SQLite examples:
     ...     name = Column(String)
     ...     fullname = Column(String)
     ...     password = Column(String)
-    ... 
+    ...
     >>> Base.metadata.create_all(engine)
     >>> from sqlalchemy.orm import sessionmaker
     >>> from zope.sqlalchemy import ZopeTransactionExtension
@@ -398,7 +398,7 @@ we've seen before:
     ...     name = Column(String)
     ...     fullname = Column(String)
     ...     password = Column(String)
-    ... 
+    ...
     >>> Base.metadata.create_all(engine)
     >>> from sqlalchemy.orm import sessionmaker
     >>> from zope.sqlalchemy import ZopeTransactionExtension
@@ -708,7 +708,7 @@ Synchronizers
 
 A synchronizer is an object that must implement beforeCompletion and
 afterCompletion methods. It's registered with the transaction manager, which
-calls beforeCompletion when it starts a top-level two-phase commit and 
+calls beforeCompletion when it starts a top-level two-phase commit and
 afterCompletion when the transaction is committed or aborted.
 
 .. code-block:: python
@@ -752,7 +752,7 @@ To doom a transaction we simply call doom on it:
     >>> import transaction
     >>> current = transaction.get()
     >>> current.doom()
-    
+
 The isDoomed method can be used to find out if a transaction is already doomed:
 
 .. code-block:: python
@@ -779,11 +779,11 @@ have used this code after setting up our session:
         session.add(User(id=2, name='John', fullname='John Watson', password='123'))
 
 We can have as many statements as we like inside the with block. If an exception
-occurs, the transaction will be aborted at the end. Otherwise, it will be 
+occurs, the transaction will be aborted at the end. Otherwise, it will be
 committed. Note that if you doom the transaction inside the context, it
 will still try to commit which will result in a DoomedTransaction
 exception.
-    
+
 
 Take advantage of the notes feature
 -----------------------------------
@@ -801,7 +801,7 @@ application must provide a way to do it.
     :linenos:
 
     import logging
-    
+
     import transaction
 
     from sqlalchemy import create_engine
@@ -812,7 +812,7 @@ application must provide a way to do it.
 
     logging.basicConfig()
     log = logging.getLogger('example')
-    
+
     engine = create_engine('postgresql://postgres@127.0.0.1:5432')
     Base = declarative_base()
     Base.metadata.create_all(engine)
@@ -823,7 +823,7 @@ application must provide a way to do it.
         name = Column(String)
         fullname = Column(String)
         password = Column(String)
-    
+
     Base.metadata.create_all(engine)
     Session = sessionmaker(bind=engine, extension=ZopeTransactionExtension())
 
@@ -833,7 +833,7 @@ application must provide a way to do it.
     note = "added user John with id 1"
     current.note(note)
     log.warn(note)
-    
+
 This example is very simple and will log the transaction even if it fails, but
 the intention was to give an idea of how transaction notes work and how they
 could be used.
@@ -847,7 +847,7 @@ answer is it doesn't, the application developer has to take care of that.
 
 The most common type of concurrency problem, is when a transaction can't be
 committed because another transaction has a lock on the resources to be
-modified.  This and other similar errors are called transient errors and 
+modified.  This and other similar errors are called transient errors and
 they are the easiest to handle. Simply retrying the transaction one or more
 times is usually enough to get it committed in this case.
 
@@ -917,7 +917,7 @@ SQLAlchemy setup that we have used in previous examples:
         with attempt:
             session.add(User(id=1, name='John', fullname='John Smith', password='123'))
             session.add(User(id=2, name='John', fullname='John Watson', password='123'))
-    
+
 The attempts method of the transaction manager returns an iterator, which by
 default will try the transaction three times. It's possible to pass a
 different number to the attempts call to change that. If a transient error is
@@ -968,7 +968,7 @@ Nothing surprising here, just what we need to be able to create our class:
 
 .. literalinclude:: ../code/transaction/pickledm.py
     :linenos:
-    :lines: 5-7 
+    :lines: 5-7
 
 We define a class, which we'll call PickleDataManager and assign the default
 transaction manager as its transaction manager. Now for the longest method of
@@ -1094,7 +1094,7 @@ called in the resulting order.
 In this case we just return a string with the 'pickledm' identifier, since it's
 not important in what order our data manager is called. There are cases when
 this feature can be very useful. For example, a data manager that does not
-support rollbacks can try to return a key that is sorted last, so that it 
+support rollbacks can try to return a key that is sorted last, so that it
 commits during tpc_vote only if the other backends in the same transaction that
 do support rollback have not rolled back at that point.
 
@@ -1256,8 +1256,8 @@ PasteDeploy configurations:
 .. code-block:: ini
 
     [filter:tm]
-    commit_veto = my.package:commit_veto 
-    
+    commit_veto = my.package:commit_veto
+
 The same registration using Python:
 
 .. code-block:: python
@@ -1328,10 +1328,10 @@ sure it's on the virtualenv root too. Add the following imports there:
     :lines: 1-13
 
 You will see some old friends here, like transaction and our pickledm module.
-On line 4 we import the serve method from paste.httpserver, which we will use
-to serve our application. Lines 6 and 7 import the view configuration machinery
+On line 5 we import the serve method from paste.httpserver, which we will use
+to serve our application. Lines 7 and 8 import the view configuration machinery
 of the Pyramid framework and a Configurator object to configure our
-application. Finally, lines 9 and 10 import the TM wrapper and the commit veto
+application. Finally, lines 10 and 11 import the TM wrapper and the commit veto
 function that we discussed in the previous section.
 
 Since we have no package to hold our application's files, we have to make sure
@@ -1457,17 +1457,17 @@ Python interpreter starts the application:
     :lines: 73-79
 
 Pyramid uses a Configurator object to handle application configuration and view
-registration. On line 3 we create a configurator and then on line 4 we call
+registration. On line 2 we create a configurator and then on line 3 we call
 its scan method to perform the view registration. Be aware that using the
 decorators to define the views in the code above is not enough for registering
 them. The scan step is required for doing that.
 
-On line 5 we use the configurator to create a WSGI app and then we wrap that
+On line 4 we use the configurator to create a WSGI app and then we wrap that
 with the repoze.tm2 middleware, to get our automatic transaction commits at the
 end of each request. We pass in the default_commit_veto as well, so that in the
 event of 4xx or 5xx response, the transaction is aborted.
 
-Finally, on line 7, we use serve to start serving our application with paste's
+Finally, on line 6, we use serve to start serving our application with paste's
 http server.
 
 We are done, this is the complete source of the application:
